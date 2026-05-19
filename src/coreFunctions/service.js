@@ -1,4 +1,3 @@
-import ReactGA from "react-ga";
 import {
   parseEpubFile,
   flattenToc,
@@ -16,21 +15,7 @@ import {
   createCompleteProgress,
 } from "../lib/generationProgress";
 
-export const initializeGoogleAnalytics = () => {
-  ReactGA.initialize("G-74BZMF8F67");
-};
-
-export const logPageView = () => {
-  ReactGA.pageview(window.location.pathname + window.location.search);
-};
-
-export const logEvent = (category, action, label) => {
-  ReactGA.event({ category, action, label });
-};
-
 export const handleDownloadSampleBook = () => {
-  logEvent("User", "Button Click", "Download Sample Book");
-
   const link = document.createElement("a");
   link.href = "/The_Crystal_Throne.epub";
   link.download = "The_Crystal_Throne.epub";
@@ -80,12 +65,6 @@ export const handleParseAndGenerateImage = async (
   setIsLoading,
   setProgress
 ) => {
-  ReactGA.event({
-    category: "User",
-    action: "Button Click",
-    label: "Start Generation",
-  });
-
   setIsLoading(true);
   let progress = createParsingProgress();
   setProgress(progress);
@@ -160,12 +139,6 @@ export const handleParseAndGenerateImage = async (
 
     progress = createCompleteProgress(bookMeta.title, progress);
     setProgress(progress);
-
-    ReactGA.event({
-      category: "User",
-      action: "Action Complete",
-      label: "Book generated and downloaded",
-    });
 
     return { title: bookMeta.title };
   } catch (error) {

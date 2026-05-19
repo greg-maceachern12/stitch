@@ -1,6 +1,5 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AppProviders from "@/components/AppProviders";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,7 +16,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
-        <AppProviders>{children}</AppProviders>
+        {children}
         <div
           id="hiddenDiv"
           style={{

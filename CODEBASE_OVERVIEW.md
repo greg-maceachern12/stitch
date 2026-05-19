@@ -75,8 +75,7 @@ src/
     *   `parseEpubFile` (`bookLogic.js`) uses EPUB.js to parse the file in the browser, extracting metadata, text content, and structure.
     *   `processAllChapters` (`bookLogic.js`) iterates through the book's chapters.
     *   For each relevant chapter:
-        *   `findChapterSegment` (`generation.js`) calls the `OpenAiSegmentAPI` backend endpoint to find a descriptive text segment.
-        *   `generatePromptFromSegment` (`generation.js`) calls the `OpenAiChatAPI` backend endpoint to create an image generation prompt from the segment.
+        *   `generateChapterImagePrompt` (`generation.js`) calls the `OpenAiChatAPI` backend endpoint to create an image prompt from the book title and chapter title.
         *   `generateImageFromPrompt` (`generation.js`) calls the `SDimageAPI` backend endpoint (likely Stable Diffusion) to generate an image based on the prompt, returning an image URL.
         *   Existing images are removed from the chapter HTML (`removeImages` in `bookLogic.js`).
         *   The new image URL is prepended as an `<img>` tag to the chapter's HTML content (`addChapter` in `bookLogic.js`).

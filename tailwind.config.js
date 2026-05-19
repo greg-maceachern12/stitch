@@ -1,11 +1,38 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
+    "./src/app/**/*.{js,jsx,ts,tsx}",
+    "./src/components/**/*.{js,jsx,ts,tsx}",
     "./src/**/*.{js,jsx,ts,tsx}",
-    "./public/index.html"
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        background: "var(--background)",
+        surface: "var(--surface)",
+        border: "var(--border)",
+        foreground: "var(--foreground)",
+        muted: "var(--muted)",
+        accent: "var(--accent)",
+        "accent-hover": "var(--accent-hover)",
+        danger: "var(--danger)",
+        "hover-surface": "var(--hover-surface)",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      maxWidth: {
+        content: "42rem",
+        doc: "48rem",
+      },
+      borderRadius: {
+        sm: "4px",
+        md: "8px",
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(15, 15, 15, 0.04), 0 0 0 1px rgba(15, 15, 15, 0.04)",
+      },
+    },
   },
-  plugins: [],
-}
+  plugins: [require("@tailwindcss/typography")],
+};

@@ -1,9 +1,28 @@
 import epub from "epubjs";
 import {
-  findChapterSegment,
-  generatePromptFromSegment,
+  CHAPTER_STATUS,
+  createChapterProgress,
+  setChapterStatus,
+  setPreparing,
+} from "../lib/generationProgress";
+import {
+  generateChapterImagePrompt,
   generateImageFromPrompt,
 } from "./generation";
+
+const NON_STORY_LABELS = [
+  "Title",
+  "Cover",
+  "Dedication",
+  "Contents",
+  "Copyright",
+  "Endorsements",
+  "Introduction",
+  "Author",
+  "About",
+  "Map",
+  "Recommendations",
+];
 
 export const parseEpubFile = (file) => {
   return new Promise((resolve, reject) => {
@@ -13,8 +32,7 @@ export const parseEpubFile = (file) => {
         const epubReader = epub(event.target.result);
         const metadata = await epubReader.loaded.metadata;
         const nav = await epubReader.loaded.navigation;
-        const toc = nav.toc;
-        resolve({ epubReader, metadata, toc });
+        resolve({ epubReader, metadata, toc: nav.toc });
       } catch (error) {
         reject(error);
       }
@@ -25,151 +43,146 @@ export const parseEpubFile = (file) => {
 };
 
 export const isNonStoryChapter = (chapterLabel) => {
-  const nonStoryLabels = [
-    "Title",
-    "Cover",
-    "Dedication",
-    "Contents",
-    "Copyright",
-    "Endorsements",
-    "Introduction",
-    "Author",
-    "About",
-    "Map",
-    "Recommendations"
-  ];
-  return nonStoryLabels.some((label) =>
+  return NON_STORY_LABELS.some((label) =>
     chapterLabel.toLowerCase().includes(label.toLowerCase())
   );
 };
 
-export const getChapterText = async (chapter, epubReader) => {
+export const flattenToc = (toc) => {
+  const chapters = [];
+  for (const item of toc) {
+    if (item.subitems?.length > 0) {
+      chapters.push(...item.subitems);
+    } else {
+      chapters.push(item);
+    }
+  }
+  return chapters;
+};
+
+export const extractStoryChapters = (chapters) =>
+  chapters.filter((chapter) => !isNonStoryChapter(chapter.label));
+
+export const renderChapterHtml = async (chapter, epubReader) => {
   const displayedChapter = await epubReader
     .renderTo("hiddenDiv")
     .display(chapter.href);
   return {
     html: displayedChapter.document.body.innerHTML,
-    text: displayedChapter.contents.innerText.slice(0, 12000),
   };
 };
 
-export const removeImages = (chapterText) => {
-  const regex = /<img[^>]+>/g;
-  return chapterText.replace(regex, "");
+export const removeImages = (html) => html.replace(/<img[^>]+>/gi, "");
+
+export const injectImage = (html, imageUrl) => {
+  const cleaned = removeImages(html);
+  if (!imageUrl) return cleaned;
+  return `<img src="${imageUrl}" alt="Chapter illustration" />\n${cleaned}`;
 };
 
-export const processAllChapters = async (
-  chapters,
+async function mapWithConcurrency(items, concurrency, fn) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const current = nextIndex++;
+      results[current] = await fn(items[current], current);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+async function generateChapterImage(chapterTitle, bookTitle, onStep) {
+  onStep?.("prompt");
+  const imagePrompt = await generateChapterImagePrompt(bookTitle, chapterTitle);
+  if (
+    !imagePrompt ||
+    imagePrompt === "False" ||
+    imagePrompt.startsWith("Error:")
+  ) {
+    return null;
+  }
+
+  onStep?.("image");
+  return generateImageFromPrompt(imagePrompt);
+}
+
+/**
+ * Renders all chapters sequentially, then runs the AI pipeline on story chapters
+ * with bounded concurrency.
+ */
+export const runImagePipeline = async ({
+  allChapters,
+  storyChapters,
   epubReader,
   bookTitle,
-  coverImg,
-  setLoadingInfo
-) => {
-  console.log(`Total chapters to process: ${chapters.length}`);
-
-  let completedChapters = 0;
-  const generatedBook = { title: bookTitle, cover: coverImg, content: [] };
-
-  const updateProgress = () => {
-    completedChapters++;
-    const percentComplete = Math.round(
-      (completedChapters / chapters.length) * 100
-    );
-    setLoadingInfo(`Processed ${percentComplete}% of chapters.`);
-  };
-
-  const results = await Promise.all(
-    chapters.map((chapter, index) =>
-      processChapter(chapter, index, epubReader, generatedBook).then(
-        (result) => {
-          updateProgress();
-          return result;
-        }
-      )
-    )
+  concurrency = 4,
+  onProgress,
+}) => {
+  const storyHrefs = new Set(storyChapters.map((c) => c.href));
+  const storyIdByHref = new Map(
+    storyChapters.map((c, i) => [c.href, c.href || `chapter-${i}`])
   );
+  const rendered = [];
 
-  const successfulGenerations = results.filter(
-    (result) => result === true
-  ).length;
+  let progress = createChapterProgress(bookTitle, storyChapters);
+  onProgress?.(progress);
 
-  console.log(
-    `All chapters processed. Successful generations: ${successfulGenerations}`
-  );
-  setLoadingInfo(
-    `Processed 100% of chapters. ${successfulGenerations} images generated successfully.`
-  );
-
-  return generatedBook;
-};
-
-const processChapter = async (
-  chapter,
-  chapterIndex,
-  epubReader,
-  generatedBook
-) => {
-  try {
-    const chapterPrompt = await getChapterText(chapter, epubReader);
-    const chapterSegment = await findChapterSegment(chapterPrompt.text);
-    
-    if (chapterSegment !== "False" && !isNonStoryChapter(chapter.label) && !chapterSegment.startsWith("Error:")) {
-      const processedPrompt = await generatePromptFromSegment(
-        chapterSegment,
-        // chapterPrompt,
-        generatedBook.title
-      );
-      
-      let imageUrl;
-      if (processedPrompt.startsWith("Error:")) {
-        console.error(processedPrompt);
-        imageUrl = "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
-      } else {
-        imageUrl = await generateImageFromPrompt(
-          processedPrompt,
-          generatedBook.title
-        );
-      }
-
-      const cleanedBook = removeImages(chapterPrompt.html);
-      addChapter(
-        generatedBook,
-        chapter.label,
-        cleanedBook,
-        imageUrl,
-        chapterIndex
-      );
-      return true;
-    } else {
-      console.log("Non-story or error: " + chapter.label);
-      const cleanedBook = removeImages(chapterPrompt.html);
-      const nonImageUrl = null;
-      addChapter(
-        generatedBook,
-        chapter.label,
-        cleanedBook,
-        nonImageUrl,
-        chapterIndex
-      );
-      return false;
-    }
-  } catch (error) {
-    console.error("Error processing chapter:", error);
-    return false;
+  for (let i = 0; i < allChapters.length; i++) {
+    const chapter = allChapters[i];
+    const { html } = await renderChapterHtml(chapter, epubReader);
+    rendered.push({
+      id: chapter.href || `chapter-${i}`,
+      title: chapter.label,
+      html,
+      isStory: storyHrefs.has(chapter.href),
+      order: i,
+    });
+    progress = setPreparing(progress, true);
+    onProgress?.(progress);
   }
-};
 
-const addChapter = (
-  generatedBook,
-  chapterTitle,
-  chapterText,
-  imageUrl,
-  chapterIndex
-) => {
-  const imageTag = imageUrl ? `<img src='${imageUrl}' />\n` : '';
-  
-  generatedBook.content[chapterIndex] = {
-    title: chapterTitle,
-    data: `<body id='master-body'>\n${imageTag}<p>${chapterText}</p>\n</body>`,
-  };
+  const storyRendered = rendered.filter((c) => c.isStory);
+  progress = setPreparing(progress, false);
+  onProgress?.(progress);
+
+  await mapWithConcurrency(storyRendered, concurrency, async (chapter) => {
+    const chapterId = storyIdByHref.get(chapter.id) ?? chapter.id;
+
+    const reportGenerating = (step) => {
+      const status =
+        step === "prompt" ? CHAPTER_STATUS.PROMPT : CHAPTER_STATUS.IMAGE;
+      progress = setChapterStatus(progress, chapterId, status);
+      onProgress?.(progress);
+    };
+
+    reportGenerating("prompt");
+    try {
+      chapter.imageUrl = await generateChapterImage(
+        chapter.title,
+        bookTitle,
+        reportGenerating
+      );
+      progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.DONE);
+    } catch (error) {
+      console.error(`Image pipeline failed for "${chapter.title}":`, error);
+      chapter.imageUrl = null;
+      progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.ERROR);
+    }
+    onProgress?.(progress);
+  });
+
+  return rendered.map((chapter) => ({
+    title: chapter.title,
+    html: removeImages(chapter.html),
+    imageUrl: chapter.imageUrl,
+    order: chapter.order,
+  }));
 };

@@ -1,0 +1,13 @@
+import { handlePost } from "@/lib/api/handleRoute";
+import { generateImage } from "@/lib/api/stableDiffusion";
+
+export async function POST(request) {
+  return handlePost(
+    request,
+    async ({ prompt, cheapModel }) => {
+      const result = await generateImage(prompt, cheapModel);
+      return Response.json({ result });
+    },
+    "POST /api/stable-diffusion"
+  );
+}

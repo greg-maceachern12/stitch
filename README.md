@@ -52,10 +52,24 @@ Visuai was crafted to enhance readers' comprehension of descriptive language in 
 
 
 ## Usage
+
+```bash
 npm install
+cp .env.example .env.local   # add API keys; .env.local is gitignored
+npm run dev                  # http://localhost:3000
+```
 
-1. npm start
+Next.js loads `.env.local` for local development. Use `NEXT_PUBLIC_` only for values that must reach the browser; keep API keys unprefixed so they stay server-only.
 
-2. node server.js *(in another window)*
+### API routes (Next.js Route Handlers)
+
+| Route | Purpose |
+|-------|---------|
+| `POST /api/chatgpt` | Build image prompt from book + chapter title |
+| `POST /api/stable-diffusion` | Generate illustration |
+
+Illustrated EPUBs are built and downloaded in the browser (no server storage).
+
+Set `API_USE_MOCKS=true` in `.env.local` for local development without provider keys.
 
 

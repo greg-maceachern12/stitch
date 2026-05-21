@@ -65,8 +65,8 @@ Next.js loads `.env.local` for local development. Use `NEXT_PUBLIC_` only for va
 
 | Route | Purpose |
 |-------|---------|
-| `POST /api/chatgpt` | Build image prompt from book + chapter title |
-| `POST /api/stable-diffusion` | Generate illustration |
+| `POST /api/generate-prompt` | Build image prompt from book + chapter title |
+| `POST /api/generate-image` | Generate illustration |
 
 Illustrated EPUBs are built and downloaded in the browser (no server storage).
 

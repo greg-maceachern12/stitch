@@ -1,5 +1,5 @@
 import { handlePost } from "@/lib/api/handleRoute";
-import { generateImage } from "@/lib/api/stableDiffusion";
+import { generateImage } from "@/lib/api/imageGeneration";
 
 export async function POST(request) {
   return handlePost(
@@ -8,6 +8,6 @@ export async function POST(request) {
       const result = await generateImage(prompt, cheapModel);
       return Response.json({ result });
     },
-    "POST /api/stable-diffusion"
+    "POST /api/generate-image"
   );
 }

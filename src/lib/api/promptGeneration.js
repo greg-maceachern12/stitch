@@ -18,18 +18,18 @@ export async function generateImagePrompt(bookTitle, chapterTitle) {
   }
 
   if (process.env.API_USE_MOCKS === "true") {
-    logApiCall("OpenRouter chat", { mock: true }).finish();
+    logApiCall("OpenRouter prompt", { mock: true }).finish();
     return PLACEHOLDER_PROMPT;
   }
 
   const model = getOpenRouterTextModel();
-  const log = logApiCall("OpenRouter chat", {
+  const log = logApiCall("OpenRouter prompt", {
     provider: "openrouter",
     model,
     request: summarizePayload({ bookTitle, chapterTitle }),
   });
 
-  const client = requireOpenRouterClient("ChatGPT route");
+  const client = requireOpenRouterClient("Prompt generation");
 
   try {
     const response = await client.chat.send({

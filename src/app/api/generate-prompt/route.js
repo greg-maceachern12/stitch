@@ -1,5 +1,5 @@
 import { handlePost } from "@/lib/api/handleRoute";
-import { generateImagePrompt } from "@/lib/api/chatgpt";
+import { generateImagePrompt } from "@/lib/api/promptGeneration";
 
 export async function POST(request) {
   return handlePost(
@@ -8,6 +8,6 @@ export async function POST(request) {
       const response = await generateImagePrompt(bookTitle, chapterTitle);
       return Response.json({ response });
     },
-    "POST /api/chatgpt"
+    "POST /api/generate-prompt"
   );
 }

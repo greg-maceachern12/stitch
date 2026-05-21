@@ -1,6 +1,6 @@
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload } from "./logger";
-import { getOpenRouterModel, requireOpenRouterClient } from "./openrouter";
+import { getOpenRouterTextModel, requireOpenRouterClient } from "./openrouter";
 
 const PLACEHOLDER_PROMPT =
   "A misty forest path at dawn, golden light through ancient trees, cinematic painted illustration, oil painting with visible brushstrokes, dramatic lighting, widescreen composition, rich atmospheric depth.";
@@ -22,7 +22,7 @@ export async function generateImagePrompt(bookTitle, chapterTitle) {
     return PLACEHOLDER_PROMPT;
   }
 
-  const model = getOpenRouterModel();
+  const model = getOpenRouterTextModel();
   const log = logApiCall("OpenRouter chat", {
     provider: "openrouter",
     model,

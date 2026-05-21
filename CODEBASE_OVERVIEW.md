@@ -58,7 +58,7 @@ src/
 *   **Authentication & DB**: Supabase
 *   **Payment**: Stripe
 *   **Analytics**: Google Analytics (`react-ga`)
-*   **AI Services (Backend - Abstracted)**: Likely OpenAI (for text segmentation/prompting) and Stable Diffusion (for image generation), accessed via API endpoints defined in `apiConfig.js`.
+*   **AI Services (Backend)**: OpenRouter SDK with Google Gemini (text + image) and Veo (video), accessed via API endpoints defined in `apiConfig.js`.
 
 ## Application Flow
 
@@ -76,7 +76,7 @@ src/
     *   `processAllChapters` (`bookLogic.js`) iterates through the book's chapters.
     *   For each relevant chapter:
         *   `generateChapterImagePrompt` (`generation.js`) calls the `OpenAiChatAPI` backend endpoint to create an image prompt from the book title and chapter title.
-        *   `generateImageFromPrompt` (`generation.js`) calls the `SDimageAPI` backend endpoint (likely Stable Diffusion) to generate an image based on the prompt, returning an image URL.
+        *   `generateImageFromPrompt` (`generation.js`) calls the `SDimageAPI` backend endpoint (OpenRouter Gemini image generation) to generate an image based on the prompt, returning an image URL or data URL.
         *   Existing images are removed from the chapter HTML (`removeImages` in `bookLogic.js`).
         *   The new image URL is prepended as an `<img>` tag to the chapter's HTML content (`addChapter` in `bookLogic.js`).
     *   The processed content (chapters with new image tags, metadata) is collected.

@@ -11,6 +11,23 @@ const PLACEHOLDER_IMAGE =
 const IMAGE_STYLE_SUFFIX =
   ", cinematic painted illustration, oil painting, visible brushstrokes, dramatic cinematic lighting, rich color palette, widescreen composition, atmospheric depth, painterly, film still";
 
+/** Style reference sent with every image generation request */
+const REFERENCE_IMAGE_URL =
+  "https://images.squarespace-cdn.com/content/v1/5b0ec7364cde7a026389229d/6d06a001-ab2a-4b0c-a74a-4411309fc25d/399336685_7545851028776543_1508813008164615625_n.jpg";
+
+function buildImageGenerationContent(promptText) {
+  return [
+    {
+      type: "text",
+      text: `${promptText} Use the attached reference image only for visual style (brushwork, color palette, lighting, painterly feel)—do not copy its subject or composition.`,
+    },
+    {
+      type: "image_url",
+      imageUrl: { url: REFERENCE_IMAGE_URL },
+    },
+  ];
+}
+
 function extractImageUrls(message) {
   const images = message?.images;
   if (!Array.isArray(images) || images.length === 0) {
@@ -40,7 +57,7 @@ export async function generateImage(prompt, cheapModel = false) {
     provider: "openrouter",
     model,
     cheapModel,
-    request: summarizePayload({ prompt }),
+    request: summarizePayload({ prompt, referenceImage: true }),
   });
 
   try {
@@ -52,7 +69,7 @@ export async function generateImage(prompt, cheapModel = false) {
         messages: [
           {
             role: "user",
-            content: fullPrompt,
+            content: buildImageGenerationContent(fullPrompt),
           },
         ],
         imageConfig: {

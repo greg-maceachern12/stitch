@@ -2,13 +2,13 @@ import { OpenRouter } from "@openrouter/sdk";
 import { ApiError } from "./errors";
 
 /** Gemini chat model for prompt / text generation */
-export const DEFAULT_TEXT_MODEL = "google/gemini-2.5-flash";
+export const DEFAULT_TEXT_MODEL = "google/gemini-3.5-flash";
 
 /** Gemini image model (primary quality) */
-export const DEFAULT_IMAGE_MODEL = "google/gemini-2.5-flash-image";
+export const DEFAULT_IMAGE_MODEL = "google/gemini-3.5-flash-image";
 
 /** Faster / cheaper Gemini image model */
-export const DEFAULT_IMAGE_CHEAP_MODEL = "google/gemini-2.5-flash-image";
+export const DEFAULT_IMAGE_CHEAP_MODEL = "google/gemini-3.5-flash-image";
 
 export function getOpenRouterTextModel() {
   return process.env.OPENROUTER_MODEL || DEFAULT_TEXT_MODEL;

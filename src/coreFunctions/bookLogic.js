@@ -99,9 +99,19 @@ async function mapWithConcurrency(items, concurrency, fn) {
   return results;
 }
 
-async function generateChapterImage(chapterTitle, bookTitle, onStep) {
+async function generateChapterImage(
+  chapterTitle,
+  bookTitle,
+  onStep,
+  imageStyle,
+  imageModel
+) {
   onStep?.("prompt");
-  const imagePrompt = await generateChapterImagePrompt(bookTitle, chapterTitle);
+  const imagePrompt = await generateChapterImagePrompt(
+    bookTitle,
+    chapterTitle,
+    imageStyle
+  );
   if (
     !imagePrompt ||
     imagePrompt === "False" ||
@@ -111,7 +121,7 @@ async function generateChapterImage(chapterTitle, bookTitle, onStep) {
   }
 
   onStep?.("image");
-  return generateImageFromPrompt(imagePrompt);
+  return generateImageFromPrompt(imagePrompt, imageStyle, imageModel);
 }
 
 /**
@@ -124,6 +134,8 @@ export const runImagePipeline = async ({
   epubReader,
   bookTitle,
   concurrency = 4,
+  imageStyle,
+  imageModel,
   onProgress,
 }) => {
   const storyHrefs = new Set(storyChapters.map((c) => c.href));
@@ -168,7 +180,9 @@ export const runImagePipeline = async ({
       chapter.imageUrl = await generateChapterImage(
         chapter.title,
         bookTitle,
-        reportGenerating
+        reportGenerating,
+        imageStyle,
+        imageModel
       );
       progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.DONE);
     } catch (error) {

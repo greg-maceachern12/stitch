@@ -75,7 +75,7 @@ src/
     *   `parseEpubFile` (`bookLogic.js`) uses EPUB.js to parse the file in the browser, extracting metadata, text content, and structure.
     *   `processAllChapters` (`bookLogic.js`) iterates through the book's chapters.
     *   For each relevant chapter:
-        *   `generateChapterImagePrompt` (`generation.js`) calls the `generatePromptApi` backend endpoint to create an image prompt from the book title and chapter title.
+        *   `generateChapterImagePrompt` (`generation.js`) calls the `generatePromptApi` backend endpoint to create a style-aware image prompt from the book title, chapter title, and selected image style.
         *   `generateImageFromPrompt` (`generation.js`) calls the `generateImageApi` backend endpoint (OpenRouter Gemini image generation) to generate an image based on the prompt, returning an image URL or data URL.
         *   Existing images are removed from the chapter HTML (`removeImages` in `bookLogic.js`).
         *   The new image URL is prepended as an `<img>` tag to the chapter's HTML content (`addChapter` in `bookLogic.js`).

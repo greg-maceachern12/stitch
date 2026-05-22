@@ -1,6 +1,9 @@
+import { getImageSizeForModel } from "@/lib/imageModels";
+import { getImageStyle, resolveStyleReferenceUrl } from "@/lib/imageStyles";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload, truncate } from "./logger";
 import {
+  getImageGenerationModalities,
   getOpenRouterImageModel,
   requireOpenRouterClient,
 } from "./openrouter";
@@ -8,24 +11,19 @@ import {
 const PLACEHOLDER_IMAGE =
   "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
 
-const IMAGE_STYLE_SUFFIX =
-  ", cinematic painted illustration, oil painting, visible brushstrokes, dramatic cinematic lighting, rich color palette, widescreen composition, atmospheric depth, painterly, film still";
+function buildImageGenerationContent(promptText, style) {
+  const content = [{ type: "text", text: promptText }];
 
-/** Style reference sent with every image generation request */
-const REFERENCE_IMAGE_URL =
-  "https://images.squarespace-cdn.com/content/v1/5b0ec7364cde7a026389229d/6d06a001-ab2a-4b0c-a74a-4411309fc25d/399336685_7545851028776543_1508813008164615625_n.jpg";
-
-function buildImageGenerationContent(promptText) {
-  return [
-    {
-      type: "text",
-      text: `${promptText} Use the attached reference image only for visual style (brushwork, color palette, lighting, painterly feel)—do not copy its subject or composition.`,
-    },
-    {
+  const referenceUrl = resolveStyleReferenceUrl(style.referenceImageUrl);
+  if (referenceUrl && style.referenceInstruction) {
+    content[0].text = `${promptText} ${style.referenceInstruction}`;
+    content.push({
       type: "image_url",
-      imageUrl: { url: REFERENCE_IMAGE_URL },
-    },
-  ];
+      imageUrl: { url: referenceUrl },
+    });
+  }
+
+  return content;
 }
 
 function extractImageUrls(message) {
@@ -39,7 +37,7 @@ function extractImageUrls(message) {
     .filter((url) => typeof url === "string" && url.length > 0);
 }
 
-export async function generateImage(prompt, cheapModel = false) {
+export async function generateImage(prompt, imageStyle, imageModel) {
   if (!prompt || typeof prompt !== "string") {
     throw new ApiError("prompt is required", 400);
   }
@@ -49,15 +47,22 @@ export async function generateImage(prompt, cheapModel = false) {
     return [PLACEHOLDER_IMAGE];
   }
 
-  const model = getOpenRouterImageModel(cheapModel);
+  const style = getImageStyle(imageStyle);
+  const model = getOpenRouterImageModel(imageModel);
   const client = requireOpenRouterClient("Image generation route");
-  const fullPrompt = `${prompt.trim()}${IMAGE_STYLE_SUFFIX}`;
+  const fullPrompt = `${prompt.trim()}${style.promptSuffix}`;
 
   const log = logApiCall("OpenRouter image", {
     provider: "openrouter",
     model,
-    cheapModel,
-    request: summarizePayload({ prompt, referenceImage: true }),
+    imageStyle: style.id,
+    imageModel: model,
+    request: summarizePayload({
+      prompt,
+      imageStyle: style.id,
+      imageModel: model,
+      referenceImage: Boolean(style.referenceImageUrl),
+    }),
   });
 
   try {
@@ -65,16 +70,16 @@ export async function generateImage(prompt, cheapModel = false) {
       chatRequest: {
         model,
         stream: false,
-        modalities: ["image", "text"],
+        modalities: getImageGenerationModalities(model),
         messages: [
           {
             role: "user",
-            content: buildImageGenerationContent(fullPrompt),
+            content: buildImageGenerationContent(fullPrompt, style),
           },
         ],
         imageConfig: {
           aspect_ratio: "16:9",
-          image_size: cheapModel ? "1K" : "2K",
+          image_size: getImageSizeForModel(model),
         },
       },
     });

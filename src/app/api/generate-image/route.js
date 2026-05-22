@@ -4,8 +4,8 @@ import { generateImage } from "@/lib/api/imageGeneration";
 export async function POST(request) {
   return handlePost(
     request,
-    async ({ prompt, cheapModel }) => {
-      const result = await generateImage(prompt, cheapModel);
+    async ({ prompt, imageStyle, imageModel }) => {
+      const result = await generateImage(prompt, imageStyle, imageModel);
       return Response.json({ result });
     },
     "POST /api/generate-image"

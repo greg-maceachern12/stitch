@@ -5,6 +5,8 @@ import SiteChrome from "@/components/SiteChrome";
 import FileUpload from "@/components/FileUpload";
 import Loading from "@/components/Loading";
 import AccessCode from "@/components/AccessCode";
+import { DEFAULT_IMAGE_MODEL } from "@/lib/imageModels";
+import { DEFAULT_IMAGE_STYLE } from "@/lib/imageStyles";
 import {
   handleFileChange,
   handleParseAndGenerateImage,
@@ -17,6 +19,8 @@ export default function AppShell() {
   const [isAccessGranted, setIsAccessGranted] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(null);
+  const [imageStyle, setImageStyle] = useState(DEFAULT_IMAGE_STYLE);
+  const [imageModel, setImageModel] = useState(DEFAULT_IMAGE_MODEL);
 
   const handleAccessGranted = () => setIsAccessGranted(true);
 
@@ -25,7 +29,10 @@ export default function AppShell() {
   };
 
   const handleParseAndGenerateImageWrapper = async () => {
-    await handleParseAndGenerateImage(epubFile, setIsLoading, setProgress);
+    await handleParseAndGenerateImage(epubFile, setIsLoading, setProgress, {
+      imageStyle,
+      imageModel,
+    });
   };
 
   return (
@@ -48,6 +55,10 @@ export default function AppShell() {
             handleParseAndGenerateImage={handleParseAndGenerateImageWrapper}
             epubFile={epubFile}
             isLoading={isLoading}
+            imageStyle={imageStyle}
+            onImageStyleChange={setImageStyle}
+            imageModel={imageModel}
+            onImageModelChange={setImageModel}
           />
         ) : (
           <AccessCode onAccessGranted={handleAccessGranted} />

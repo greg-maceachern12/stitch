@@ -1,10 +1,26 @@
 import { OpenRouter } from "@openrouter/sdk";
+import { DEFAULT_IMAGE_MODEL, resolveImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
 
-const DEFAULT_MODEL = "openai/gpt-4o-mini";
+/** Gemini chat model for prompt / text generation */
+export const DEFAULT_TEXT_MODEL = "google/gemini-3.5-flash";
 
-export function getOpenRouterModel() {
-  return process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+export { DEFAULT_IMAGE_MODEL };
+
+/** Modalities required by the image model (Grok is image-only; most others also return text). */
+export function getImageGenerationModalities(model) {
+  if (model.startsWith("x-ai/grok-imagine")) {
+    return ["image"];
+  }
+  return ["image", "text"];
+}
+
+export function getOpenRouterTextModel() {
+  return process.env.OPENROUTER_MODEL || DEFAULT_TEXT_MODEL;
+}
+
+export function getOpenRouterImageModel(requestedModel) {
+  return resolveImageModel(requestedModel);
 }
 
 export function requireOpenRouterClient(routeLabel) {

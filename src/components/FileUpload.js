@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UploadCloud, Wand2 } from "lucide-react";
+import OptionsPill from "@/components/OptionsPill";
 
 const FileUpload = ({
   handleFileChange,
@@ -9,6 +10,10 @@ const FileUpload = ({
   handleParseAndGenerateImage,
   epubFile,
   isLoading,
+  imageStyle,
+  onImageStyleChange,
+  imageModel,
+  onImageModelChange,
 }) => {
   const [fileName, setFileName] = useState("No file chosen");
 
@@ -23,9 +28,18 @@ const FileUpload = ({
   return (
     <div className="form-card w-full space-y-6">
       <div className="space-y-2">
-        <label htmlFor="file-upload" className="block text-sm font-medium text-foreground">
-          Your EPUB file
-        </label>
+        <div className="relative flex items-center justify-between gap-3 overflow-visible">
+          <label htmlFor="file-upload" className="text-sm font-medium text-foreground">
+            Your EPUB file
+          </label>
+          <OptionsPill
+            imageStyle={imageStyle}
+            onImageStyleChange={onImageStyleChange}
+            imageModel={imageModel}
+            onImageModelChange={onImageModelChange}
+            disabled={isLoading}
+          />
+        </div>
         <label
           htmlFor="file-upload"
           className="group flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed border-border bg-background px-6 py-10 transition-colors hover:border-foreground/25 hover:bg-hover-surface/50"

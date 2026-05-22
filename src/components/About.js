@@ -74,7 +74,7 @@ function About() {
 
           <aside className="not-prose my-8 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
             <p className="text-sm font-medium text-amber-950">
-              Please don&apos;t go crazy on the generations… this eats up my OpenRouter/SD
+              Please don&apos;t go crazy on the generations… this eats up my OpenRouter
               credits.
             </p>
           </aside>

@@ -1,5 +1,5 @@
 import { logApiCall, summarizePayload } from "@/lib/api/logger";
-import { OpenAiChatAPI, SDimageAPI } from "../utils/apiConfig";
+import { generateImageApi, generatePromptApi } from "../utils/apiConfig";
 
 function routeLabel(url) {
   try {
@@ -33,15 +33,24 @@ async function postJson(url, body) {
   return data;
 }
 
-export async function generateChapterImagePrompt(bookTitle, chapterTitle) {
-  const data = await postJson(OpenAiChatAPI, { bookTitle, chapterTitle });
+export async function generateChapterImagePrompt(
+  bookTitle,
+  chapterTitle,
+  imageStyle
+) {
+  const data = await postJson(generatePromptApi, {
+    bookTitle,
+    chapterTitle,
+    imageStyle,
+  });
   return data.response;
 }
 
-export async function generateImageFromPrompt(prompt) {
-  const data = await postJson(SDimageAPI, {
+export async function generateImageFromPrompt(prompt, imageStyle, imageModel) {
+  const data = await postJson(generateImageApi, {
     prompt,
-    cheapModel: false,
+    imageStyle,
+    imageModel,
   });
 
   if (!data.result?.[0]) {

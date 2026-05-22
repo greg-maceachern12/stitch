@@ -63,7 +63,8 @@ export function downloadEpubBlob(epubBlob, title) {
 export const handleParseAndGenerateImage = async (
   epubFile,
   setIsLoading,
-  setProgress
+  setProgress,
+  { imageStyle, imageModel } = {}
 ) => {
   setIsLoading(true);
   let progress = createParsingProgress();
@@ -109,6 +110,8 @@ export const handleParseAndGenerateImage = async (
       epubReader,
       bookTitle: bookMeta.title,
       concurrency: 4,
+      imageStyle,
+      imageModel,
       onProgress: (update) => {
         progress = update;
         setProgress(update);

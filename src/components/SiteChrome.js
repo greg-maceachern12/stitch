@@ -1,14 +1,13 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { handleDownloadSampleBook } from "@/coreFunctions/service";
 
 export default function SiteChrome({ children, variant = "default" }) {
   const isForm = variant === "form";
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar handleDownloadSampleBook={handleDownloadSampleBook} />
+      <Navbar />
       <main
         className={
           isForm

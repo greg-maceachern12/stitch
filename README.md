@@ -1,75 +1,66 @@
-# Visuai *(still under active development)*
+# Visuai
 
-## Description
+Visuai is a Next.js app that turns an EPUB into an illustrated EPUB. Upload a
+book, choose an image style and OpenRouter image model, and the app generates a
+chapter-opening illustration for each story chapter before packaging the result
+for download in the browser.
 
-Visuai was crafted to enhance readers' comprehension of descriptive language in books by transforming text into visual representations. It operates with PDF or EPUB files (currently limited to EPUB), scanning each chapter for visually descriptive passages. Utilizing Gemini image models via OpenRouter, it generates images corresponding to these descriptions. These images are seamlessly integrated beneath the respective paragraphs, providing readers with a nuanced visual interpretation of the text.
+## How It Works
 
-## Example 1
-### Text
-> Across the courtesy bay the white palaces of fashionable East Egg glittered along
-> the water. Their house was even more elaborate than I expected, a cheerful
-> red-and-white Georgian Colonial mansion, overlooking the bay. The lawn started at
-> the beach and ran toward the front door for a quarter of a mile, jumping over
-> sun-dials and brick walks and burning gardens—finally when it reached the house
-> drifting up the side in bright vines as though from the momentum of its run. The
-> front was broken by a line of French windows, glowing now with reflected gold and
-> wide open to the warm windy afternoon
+1. The browser parses the uploaded EPUB with EPUB.js and reads metadata, cover,
+   table of contents, and chapter HTML.
+2. Non-story front/back matter is skipped by label, while story chapters are
+   rendered and prepared for illustration.
+3. The browser calls local Next.js route handlers:
+   - `POST /api/generate-prompt` builds a style-aware image prompt.
+   - `POST /api/generate-image` generates an illustration with OpenRouter.
+4. The browser removes existing chapter images, inserts generated
+   chapter-opening artwork, builds the final EPUB with JSZip, and starts the
+   download locally. No generated EPUB is stored on the server.
 
-### Image
-![Example of GenAI image from The Great Gatsby](assets/gatsby.jpeg)
-
-## Example 2
-### Text
-> They neared the city-mountain, and Eragon saw that the white marble of Tronjheim was highly 
-> polished and shaped into flowing contours, as if it had been poured into place. 
-> It was dotted with countless round windows framed by elaborate carvings. A 
-> colored lantern hung in each window, casting a soft glow on the surrounding 
-> rock. No turrets or smokestacks were visible. Directly ahead, two 
-> thirty-foot-high gold griffins guarded a massive timber gate—recessed twenty 
-> yards into the base of Tronjheim—which was shadowed by thick trusses that 
-> supported an arched vault far overhead.
-
-### Image
-![Example of GenAI image from Eragon](assets/eragonExample.jpeg)
-
-## Example 3
-### Text
-> Eragon knelt in a bed of trampled reed grass and scanned the tracks with a practiced eye. 
-> The prints told him that the deer had been in the meadow only a half-hour before. 
->Soon they would bed down. His target, a small doe with a pronounced limp in her 
-> left forefoot, was still with the herd. He was amazed she had made it so far 
-> without a wolf or bear catching her. 
- 
-> The sky was clear and dark, and a slight breeze stirred the air. A silvery cloud drifted 
-> over the mountains that surrounded him, its edges glowing with ruddy light cast 
-> from the harvest moon cradled between two peaks. Streams flowed down the 
-> mountains from stolid glaciers and glistening snowpacks. A brooding mist crept 
-> along the valley’s floor, almost thick enough to obscure his feet.”
-
-
-### Image
-![Example of GenAI image from Eragon](assets/eragonEx3.png)
-
-
-## Usage
+## Development
 
 ```bash
 npm install
-cp .env.example .env.local   # add API keys; .env.local is gitignored
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local
+npm run dev
 ```
 
-Next.js loads `.env.local` for local development. Use `NEXT_PUBLIC_` only for values that must reach the browser; keep API keys unprefixed so they stay server-only.
+Open [http://localhost:3000](http://localhost:3000).
 
-### API routes (Next.js Route Handlers)
+Next.js loads `.env.local` for local development. Use `NEXT_PUBLIC_` only for
+values that must reach the browser; keep API keys unprefixed so they stay
+server-only.
 
-| Route | Purpose |
-|-------|---------|
-| `POST /api/generate-prompt` | Build image prompt from book + chapter title |
-| `POST /api/generate-image` | Generate illustration |
+## Environment
 
-Illustrated EPUBs are built and downloaded in the browser (no server storage).
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-Set `API_USE_MOCKS=true` in `.env.local` for local development without provider keys.
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
+OPENROUTER_MODEL=google/gemini-3.5-flash
+OPENROUTER_IMAGE_MODEL=x-ai/grok-imagine-image-quality
 
+API_USE_MOCKS=false
+```
 
+Set `API_USE_MOCKS=true` to exercise the UI and EPUB build path without calling
+OpenRouter.
+
+## Scripts
+
+```bash
+npm run dev      # local development
+npm run lint     # ESLint
+npm run build    # production build
+npm run start    # start production server
+```
+
+## Current Scope
+
+- EPUB upload and in-browser EPUB assembly.
+- OpenRouter-backed prompt and image generation through Next.js API routes.
+- Style/model selection, progress tracking, and About page.
+
+PDF support, auth, payments, and server-side EPUB storage are intentionally not
+part of the current app.

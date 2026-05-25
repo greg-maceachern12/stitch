@@ -1,84 +1,15 @@
-import epub from "epubjs";
 import {
   CHAPTER_STATUS,
   createChapterProgress,
   setChapterStatus,
   setPreparing,
-} from "../lib/generationProgress";
+} from "@/lib/generationProgress";
 import {
   generateChapterImagePrompt,
   generateImageFromPrompt,
-} from "./generation";
-
-const NON_STORY_LABELS = [
-  "Title",
-  "Cover",
-  "Dedication",
-  "Contents",
-  "Copyright",
-  "Endorsements",
-  "Introduction",
-  "Author",
-  "About",
-  "Map",
-  "Recommendations",
-];
-
-export const parseEpubFile = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const epubReader = epub(event.target.result);
-        const metadata = await epubReader.loaded.metadata;
-        const nav = await epubReader.loaded.navigation;
-        resolve({ epubReader, metadata, toc: nav.toc });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsArrayBuffer(file);
-  });
-};
-
-export const isNonStoryChapter = (chapterLabel) => {
-  return NON_STORY_LABELS.some((label) =>
-    chapterLabel.toLowerCase().includes(label.toLowerCase())
-  );
-};
-
-export const flattenToc = (toc) => {
-  const chapters = [];
-  for (const item of toc) {
-    if (item.subitems?.length > 0) {
-      chapters.push(...item.subitems);
-    } else {
-      chapters.push(item);
-    }
-  }
-  return chapters;
-};
-
-export const extractStoryChapters = (chapters) =>
-  chapters.filter((chapter) => !isNonStoryChapter(chapter.label));
-
-export const renderChapterHtml = async (chapter, epubReader) => {
-  const displayedChapter = await epubReader
-    .renderTo("hiddenDiv")
-    .display(chapter.href);
-  return {
-    html: displayedChapter.document.body.innerHTML,
-  };
-};
-
-export const removeImages = (html) => html.replace(/<img[^>]+>/gi, "");
-
-export const injectImage = (html, imageUrl) => {
-  const cleaned = removeImages(html);
-  if (!imageUrl) return cleaned;
-  return `<img src="${imageUrl}" alt="Chapter illustration" />\n${cleaned}`;
-};
+} from "@/lib/client/api";
+import { getImageModel } from "@/lib/imageModels";
+import { removeImages, renderChapterHtml } from "./chapters";
 
 async function mapWithConcurrency(items, concurrency, fn) {
   const results = new Array(items.length);
@@ -95,6 +26,7 @@ async function mapWithConcurrency(items, concurrency, fn) {
     { length: Math.min(concurrency, items.length) },
     () => worker()
   );
+
   await Promise.all(workers);
   return results;
 }
@@ -112,6 +44,7 @@ async function generateChapterImage(
     chapterTitle,
     imageStyle
   );
+
   if (
     !imagePrompt ||
     imagePrompt === "False" ||
@@ -124,11 +57,7 @@ async function generateChapterImage(
   return generateImageFromPrompt(imagePrompt, imageStyle, imageModel);
 }
 
-/**
- * Renders all chapters sequentially, then runs the AI pipeline on story chapters
- * with bounded concurrency.
- */
-export const runImagePipeline = async ({
+export async function runImagePipeline({
   allChapters,
   storyChapters,
   epubReader,
@@ -136,20 +65,32 @@ export const runImagePipeline = async ({
   concurrency = 4,
   imageStyle,
   imageModel,
+  initialProgress,
   onProgress,
-}) => {
-  const storyHrefs = new Set(storyChapters.map((c) => c.href));
+}) {
+  const resolvedImageModel = getImageModel(imageModel).id;
+  const storyHrefs = new Set(storyChapters.map((chapter) => chapter.href));
   const storyIdByHref = new Map(
-    storyChapters.map((c, i) => [c.href, c.href || `chapter-${i}`])
+    storyChapters.map((chapter, index) => [
+      chapter.href,
+      chapter.href || `chapter-${index}`,
+    ])
   );
   const rendered = [];
 
-  let progress = createChapterProgress(bookTitle, storyChapters);
-  onProgress?.(progress);
+  let progress =
+    initialProgress ?? createChapterProgress(bookTitle, storyChapters);
+  if (initialProgress) {
+    progress = setPreparing(progress, true);
+    onProgress?.(progress);
+  } else {
+    onProgress?.(progress);
+  }
 
   for (let i = 0; i < allChapters.length; i++) {
     const chapter = allChapters[i];
     const { html } = await renderChapterHtml(chapter, epubReader);
+
     rendered.push({
       id: chapter.href || `chapter-${i}`,
       title: chapter.label,
@@ -157,11 +98,12 @@ export const runImagePipeline = async ({
       isStory: storyHrefs.has(chapter.href),
       order: i,
     });
+
     progress = setPreparing(progress, true);
     onProgress?.(progress);
   }
 
-  const storyRendered = rendered.filter((c) => c.isStory);
+  const storyRendered = rendered.filter((chapter) => chapter.isStory);
   progress = setPreparing(progress, false);
   onProgress?.(progress);
 
@@ -176,13 +118,14 @@ export const runImagePipeline = async ({
     };
 
     reportGenerating("prompt");
+
     try {
       chapter.imageUrl = await generateChapterImage(
         chapter.title,
         bookTitle,
         reportGenerating,
         imageStyle,
-        imageModel
+        resolvedImageModel
       );
       progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.DONE);
     } catch (error) {
@@ -190,6 +133,7 @@ export const runImagePipeline = async ({
       chapter.imageUrl = null;
       progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.ERROR);
     }
+
     onProgress?.(progress);
   });
 
@@ -199,4 +143,4 @@ export const runImagePipeline = async ({
     imageUrl: chapter.imageUrl,
     order: chapter.order,
   }));
-};
+}

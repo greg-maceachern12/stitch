@@ -16,6 +16,7 @@ export const STITCH_STATUS = {
 
 export const PHASES = {
   PARSING: "parsing",
+  READY: "ready",
   PREPARING: "preparing",
   ILLUSTRATING: "illustrating",
   STITCHING: "stitching",
@@ -34,7 +35,10 @@ const CHAPTER_STATUS_LABEL = {
 
 const STITCH_LABEL = "Stitch book together";
 
-export function chapterStatusLabel(status) {
+export function chapterStatusLabel(status, phase) {
+  if (phase === PHASES.READY && status === CHAPTER_STATUS.PENDING) {
+    return "Ready";
+  }
   return CHAPTER_STATUS_LABEL[status] ?? "Waiting";
 }
 
@@ -50,12 +54,30 @@ export function createParsingProgress(bookTitle = null) {
   };
 }
 
-export function createChapterProgress(bookTitle, storyChapters) {
-  const chapters = storyChapters.map((chapter, index) => ({
+function buildChapterEntries(storyChapters) {
+  return storyChapters.map((chapter, index) => ({
     id: chapter.href || `chapter-${index}`,
     title: chapter.label,
     status: CHAPTER_STATUS.PENDING,
   }));
+}
+
+export function createReadyProgress(bookTitle, storyChapters) {
+  const chapters = buildChapterEntries(storyChapters);
+
+  return {
+    phase: PHASES.READY,
+    bookTitle,
+    isPreparing: false,
+    chapters,
+    stitching: { status: STITCH_STATUS.PENDING, label: STITCH_LABEL },
+    message: "Ready — click Visualize to illustrate each chapter",
+    percent: 0,
+  };
+}
+
+export function createChapterProgress(bookTitle, storyChapters) {
+  const chapters = buildChapterEntries(storyChapters);
 
   return {
     phase: PHASES.ILLUSTRATING,
@@ -64,19 +86,26 @@ export function createChapterProgress(bookTitle, storyChapters) {
     chapters,
     stitching: { status: STITCH_STATUS.PENDING, label: STITCH_LABEL },
     message: "Preparing chapters…",
-    percent: computePercent(chapters, STITCH_STATUS.PENDING, true),
+    percent: computePercent(
+      chapters,
+      STITCH_STATUS.PENDING,
+      true,
+      PHASES.ILLUSTRATING
+    ),
   };
 }
 
 export function setPreparing(progress, isPreparing, message) {
   return {
     ...progress,
+    phase: PHASES.ILLUSTRATING,
     isPreparing,
     message: message ?? (isPreparing ? "Preparing chapters…" : progress.message),
     percent: computePercent(
       progress.chapters,
       progress.stitching.status,
-      isPreparing
+      isPreparing,
+      PHASES.ILLUSTRATING
     ),
   };
 }
@@ -97,7 +126,12 @@ export function setChapterStatus(progress, chapterId, status) {
     isPreparing: false,
     chapters,
     message,
-    percent: computePercent(chapters, progress.stitching.status, false),
+    percent: computePercent(
+      chapters,
+      progress.stitching.status,
+      false,
+      PHASES.ILLUSTRATING
+    ),
   };
 }
 
@@ -125,7 +159,12 @@ export function setStitchingProgress(progress, status, detail) {
     isPreparing: false,
     stitching,
     message: messages[status] ?? progress.message,
-    percent: computePercent(progress.chapters, status, false),
+    percent: computePercent(
+      progress.chapters,
+      status,
+      false,
+      progress.phase === PHASES.READY ? PHASES.ILLUSTRATING : progress.phase
+    ),
   };
 }
 
@@ -154,7 +193,22 @@ export function isTerminalPhase(phase) {
   return phase === PHASES.COMPLETE || phase === PHASES.ERROR;
 }
 
-function computePercent(chapters, stitchStatus, isPreparing) {
+export function shouldShowProgressPanel(progress, isLoading) {
+  if (!progress) return false;
+  return (
+    isLoading ||
+    progress.phase === PHASES.READY ||
+    progress.phase === PHASES.PARSING ||
+    isTerminalPhase(progress.phase)
+  );
+}
+
+export function canStartVisualization(progress, isParsing) {
+  return !isParsing && progress?.phase === PHASES.READY;
+}
+
+function computePercent(chapters, stitchStatus, isPreparing, phase) {
+  if (phase === PHASES.READY) return 0;
   if (!chapters.length) return isPreparing ? 5 : 0;
 
   const total = chapters.length;

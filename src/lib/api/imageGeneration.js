@@ -11,11 +11,11 @@ import {
 const PLACEHOLDER_IMAGE =
   "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
 
-function buildImageGenerationContent(promptText, style) {
+function buildImageGenerationContent(promptText, style, includeReferenceImage) {
   const content = [{ type: "text", text: promptText }];
 
   const referenceUrl = resolveStyleReferenceUrl(style.referenceImageUrl);
-  if (referenceUrl && style.referenceInstruction) {
+  if (includeReferenceImage && referenceUrl && style.referenceInstruction) {
     content[0].text = `${promptText} ${style.referenceInstruction}`;
     content.push({
       type: "image_url",
@@ -24,6 +24,24 @@ function buildImageGenerationContent(promptText, style) {
   }
 
   return content;
+}
+
+function providerStatus(error) {
+  return error.status ?? error.statusCode ?? error.rawResponse?.status ?? 502;
+}
+
+function providerMessage(error) {
+  return (
+    error.error?.message ||
+    error.body?.error?.message ||
+    error.body?.message ||
+    error.message ||
+    "Image provider failed"
+  );
+}
+
+function isProviderError(error) {
+  return providerStatus(error) >= 400;
 }
 
 function extractImageUrls(message) {
@@ -35,6 +53,36 @@ function extractImageUrls(message) {
   return images
     .map((image) => image?.imageUrl?.url ?? image?.image_url?.url)
     .filter((url) => typeof url === "string" && url.length > 0);
+}
+
+async function sendImageRequest({
+  client,
+  model,
+  fullPrompt,
+  style,
+  includeReferenceImage,
+}) {
+  return client.chat.send({
+    chatRequest: {
+      model,
+      stream: false,
+      modalities: getImageGenerationModalities(model),
+      messages: [
+        {
+          role: "user",
+          content: buildImageGenerationContent(
+            fullPrompt,
+            style,
+            includeReferenceImage
+          ),
+        },
+      ],
+      imageConfig: {
+        aspect_ratio: "16:9",
+        image_size: getImageSizeForModel(model),
+      },
+    },
+  });
 }
 
 export async function generateImage(prompt, imageStyle, imageModel) {
@@ -51,6 +99,9 @@ export async function generateImage(prompt, imageStyle, imageModel) {
   const model = getOpenRouterImageModel(imageModel);
   const client = requireOpenRouterClient("Image generation route");
   const fullPrompt = `${prompt.trim()}${style.promptSuffix}`;
+  const hasReferenceImage = Boolean(
+    resolveStyleReferenceUrl(style.referenceImageUrl) && style.referenceInstruction
+  );
 
   const log = logApiCall("OpenRouter image", {
     provider: "openrouter",
@@ -61,32 +112,51 @@ export async function generateImage(prompt, imageStyle, imageModel) {
       prompt,
       imageStyle: style.id,
       imageModel: model,
-      referenceImage: Boolean(style.referenceImageUrl),
+      referenceImage: hasReferenceImage,
     }),
   });
 
   try {
-    const response = await client.chat.send({
-      chatRequest: {
+    let response;
+    let retriedWithoutReference = false;
+
+    try {
+      response = await sendImageRequest({
+        client,
         model,
-        stream: false,
-        modalities: getImageGenerationModalities(model),
-        messages: [
-          {
-            role: "user",
-            content: buildImageGenerationContent(fullPrompt, style),
-          },
-        ],
-        imageConfig: {
-          aspect_ratio: "16:9",
-          image_size: getImageSizeForModel(model),
-        },
-      },
-    });
+        fullPrompt,
+        style,
+        includeReferenceImage: hasReferenceImage,
+      });
+    } catch (error) {
+      if (!hasReferenceImage || !isProviderError(error)) {
+        throw error;
+      }
+
+      retriedWithoutReference = true;
+      console.warn(
+        "OpenRouter image request failed with a style reference; retrying without the reference image.",
+        {
+          model,
+          status: providerStatus(error),
+          error: providerMessage(error),
+        }
+      );
+      response = await sendImageRequest({
+        client,
+        model,
+        fullPrompt,
+        style,
+        includeReferenceImage: false,
+      });
+    }
 
     const urls = extractImageUrls(response.choices?.[0]?.message);
     if (urls.length > 0) {
-      log.finish({ images: urls.length });
+      log.finish({
+        images: urls.length,
+        retriedWithoutReference,
+      });
       return urls;
     }
 
@@ -100,7 +170,10 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     throw new ApiError("No image URL returned from provider", 502);
   } catch (error) {
     if (!(error instanceof ApiError)) {
-      log.fail(error);
+      const status = providerStatus(error);
+      const message = providerMessage(error);
+      log.fail(error, { status, providerMessage: truncate(message, 200) });
+      throw new ApiError(`Image provider failed: ${message}`, status);
     }
     throw error;
   }

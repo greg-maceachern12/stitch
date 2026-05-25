@@ -58,7 +58,7 @@ export function logApiCall(label, meta = {}) {
         ...logMeta(extra),
         durationMs,
         error: err.message,
-        status: err.status,
+        status: err.status ?? err.statusCode,
       });
     },
   };

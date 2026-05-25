@@ -1,3 +1,5 @@
+import { formatPerImageCost, getImageCostUsd } from "@/lib/imageModelPricing";
+
 /** Default OpenRouter image model (Grok). */
 export const DEFAULT_IMAGE_MODEL = "x-ai/grok-imagine-image-quality";
 
@@ -10,7 +12,7 @@ const HALF_K_MODELS = new Set(["google/gemini-3.1-flash-image-preview"]);
 /** @type {Record<string, { label: string; logoUrl: string }>} */
 export const IMAGE_MODELS = {
   "x-ai/grok-imagine-image-quality": {
-    label: "Grok",
+    label: "Grok Image Quality",
     logoUrl: "/model-logos/grok.png",
   },
   "bytedance-seed/seedream-4.5": {
@@ -36,6 +38,8 @@ export const IMAGE_MODEL_OPTIONS = Object.entries(IMAGE_MODELS).map(
     id,
     label: model.label,
     logoUrl: model.logoUrl,
+    costPerImageUsd: getImageCostUsd(id),
+    costLabel: formatPerImageCost(id),
   })
 );
 
@@ -48,15 +52,9 @@ export function getImageModel(modelId) {
   return { id, ...IMAGE_MODELS[id] };
 }
 
+/** Resolve a user-selected model id; invalid/missing values fall back to Grok. */
 export function resolveImageModel(requestedModel) {
-  if (isValidImageModel(requestedModel)) {
-    return requestedModel;
-  }
-  const envModel = process.env.OPENROUTER_IMAGE_MODEL;
-  if (isValidImageModel(envModel)) {
-    return envModel;
-  }
-  return DEFAULT_IMAGE_MODEL;
+  return getImageModel(requestedModel).id;
 }
 
 export function getImageSizeForModel(modelId) {

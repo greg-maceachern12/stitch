@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { DEFAULT_IMAGE_STYLE, IMAGE_STYLE_OPTIONS } from "@/lib/imageStyles";
 import {
@@ -36,7 +36,7 @@ function ModelDropdown({ imageModel, onImageModelChange, disabled }) {
           >
             {IMAGE_MODEL_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {option.label} ({option.costLabel})
               </option>
             ))}
           </select>
@@ -52,16 +52,9 @@ function ModelDropdown({ imageModel, onImageModelChange, disabled }) {
 
 function StyleCarousel({ imageStyle, onImageStyleChange, disabled }) {
   const indexFromProp = IMAGE_STYLE_OPTIONS.findIndex((o) => o.id === imageStyle);
-  const [index, setIndex] = useState(indexFromProp >= 0 ? indexFromProp : 0);
-
-  useEffect(() => {
-    if (indexFromProp >= 0) {
-      setIndex(indexFromProp);
-    }
-  }, [indexFromProp]);
+  const selectedIndex = indexFromProp >= 0 ? indexFromProp : 0;
 
   const select = (nextIndex) => {
-    setIndex(nextIndex);
     onImageStyleChange(IMAGE_STYLE_OPTIONS[nextIndex].id);
   };
 
@@ -69,7 +62,7 @@ function StyleCarousel({ imageStyle, onImageStyleChange, disabled }) {
     <div className="w-72" role="radiogroup" aria-label="Image style">
       <div className="flex items-end gap-1.5">
         {IMAGE_STYLE_OPTIONS.map((option, i) => {
-          const selected = i === index;
+          const selected = i === selectedIndex;
           return (
             <button
               key={option.id}

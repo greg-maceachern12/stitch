@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Download, Mail, Home, Info } from "lucide-react";
+import { Menu, X, Mail, Home, Info } from "lucide-react";
 
-const Navbar = ({ handleDownloadSampleBook }) => {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -36,14 +36,6 @@ const Navbar = ({ handleDownloadSampleBook }) => {
             <Link href="/about" className="nav-pill">
               About
             </Link>
-            <button
-              type="button"
-              onClick={handleDownloadSampleBook}
-              className="nav-pill inline-flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              <span>Sample EPUB</span>
-            </button>
             <a
               href="mailto:gregmaceachern98@gmail.com?subject=Issues%20Generating%20Book&body=-%20This%20was%20broken%3A%0A-%20This%20is%20how%20it%20should%20have%20worked%3A%0A-%20Images%20or%20console%20errors%20(optional)%3A"
               className="nav-pill inline-flex items-center gap-2"
@@ -80,19 +72,6 @@ const Navbar = ({ handleDownloadSampleBook }) => {
                 About
               </span>
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                handleDownloadSampleBook();
-                closeMenu();
-              }}
-              className="nav-pill block w-full text-left"
-            >
-              <span className="flex items-center gap-3">
-                <Download className="h-4 w-4" />
-                Sample EPUB
-              </span>
-            </button>
             <a
               href="mailto:gregmaceachern98@gmail.com?subject=Issues%20Generating%20Book"
               className="nav-pill block"

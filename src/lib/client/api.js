@@ -1,9 +1,12 @@
 import { logApiCall, summarizePayload } from "@/lib/api/logger";
-import { generateImageApi, generatePromptApi } from "../utils/apiConfig";
+import { getImageModel } from "@/lib/imageModels";
+
+const GENERATE_PROMPT_API = "/api/generate-prompt";
+const GENERATE_IMAGE_API = "/api/generate-image";
 
 function routeLabel(url) {
   try {
-    return `POST ${new URL(url).pathname}`;
+    return `POST ${new URL(url, window.location.origin).pathname}`;
   } catch {
     return `POST ${url}`;
   }
@@ -38,7 +41,7 @@ export async function generateChapterImagePrompt(
   chapterTitle,
   imageStyle
 ) {
-  const data = await postJson(generatePromptApi, {
+  const data = await postJson(GENERATE_PROMPT_API, {
     bookTitle,
     chapterTitle,
     imageStyle,
@@ -47,10 +50,11 @@ export async function generateChapterImagePrompt(
 }
 
 export async function generateImageFromPrompt(prompt, imageStyle, imageModel) {
-  const data = await postJson(generateImageApi, {
+  const { id: resolvedModel } = getImageModel(imageModel);
+  const data = await postJson(GENERATE_IMAGE_API, {
     prompt,
     imageStyle,
-    imageModel,
+    imageModel: resolvedModel,
   });
 
   if (!data.result?.[0]) {

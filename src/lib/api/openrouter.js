@@ -1,5 +1,5 @@
 import { OpenRouter } from "@openrouter/sdk";
-import { DEFAULT_IMAGE_MODEL, resolveImageModel } from "@/lib/imageModels";
+import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
 
 /** Gemini chat model for prompt / text generation */
@@ -20,7 +20,7 @@ export function getOpenRouterTextModel() {
 }
 
 export function getOpenRouterImageModel(requestedModel) {
-  return resolveImageModel(requestedModel);
+  return getImageModel(requestedModel).id;
 }
 
 export function requireOpenRouterClient(routeLabel) {

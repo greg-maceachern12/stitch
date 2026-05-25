@@ -4,36 +4,17 @@ import { useState } from "react";
 import SiteChrome from "@/components/SiteChrome";
 import FileUpload from "@/components/FileUpload";
 import Loading from "@/components/Loading";
+import CompleteCard from "@/components/CompleteCard";
 import AccessCode from "@/components/AccessCode";
-import { DEFAULT_IMAGE_MODEL } from "@/lib/imageModels";
-import { DEFAULT_IMAGE_STYLE } from "@/lib/imageStyles";
-import {
-  handleFileChange,
-  handleParseAndGenerateImage,
-  handleDownloadSampleBook,
-} from "@/coreFunctions/service";
+import { useIllustratedEpub } from "@/lib/client/useIllustratedEpub";
+import { canStartVisualization, PHASES } from "@/lib/generationProgress";
 
 export default function AppShell() {
-  const [epubFile, setEpubFile] = useState(null);
-  const [fileError, setFileError] = useState("");
   const [isAccessGranted, setIsAccessGranted] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(null);
-  const [imageStyle, setImageStyle] = useState(DEFAULT_IMAGE_STYLE);
-  const [imageModel, setImageModel] = useState(DEFAULT_IMAGE_MODEL);
+  const epubWorkflow = useIllustratedEpub();
 
   const handleAccessGranted = () => setIsAccessGranted(true);
-
-  const handleFileChangeWrapper = (event) => {
-    handleFileChange(event.target.files[0], setEpubFile, setFileError);
-  };
-
-  const handleParseAndGenerateImageWrapper = async () => {
-    await handleParseAndGenerateImage(epubFile, setIsLoading, setProgress, {
-      imageStyle,
-      imageModel,
-    });
-  };
+  const isComplete = epubWorkflow.progress?.phase === PHASES.COMPLETE;
 
   return (
     <SiteChrome variant="form">
@@ -48,26 +29,45 @@ export default function AppShell() {
       </header>
 
       <div className="w-full space-y-6">
-        {isAccessGranted ? (
+        {isComplete ? (
+          <CompleteCard
+            bookTitle={epubWorkflow.completedDownload?.title}
+            onRedownload={epubWorkflow.redownload}
+          />
+        ) : isAccessGranted ? (
           <FileUpload
-            handleFileChange={handleFileChangeWrapper}
-            fileError={fileError}
-            handleParseAndGenerateImage={handleParseAndGenerateImageWrapper}
-            epubFile={epubFile}
-            isLoading={isLoading}
-            imageStyle={imageStyle}
-            onImageStyleChange={setImageStyle}
-            imageModel={imageModel}
-            onImageModelChange={setImageModel}
+            onFileChange={epubWorkflow.selectFile}
+            onDismissBook={epubWorkflow.dismissBook}
+            fileError={epubWorkflow.fileError}
+            onGenerate={epubWorkflow.generateIllustratedEpub}
+            epubFile={epubWorkflow.epubFile}
+            isParsing={epubWorkflow.isParsing}
+            isLoading={epubWorkflow.isLoading}
+            canVisualize={canStartVisualization(
+              epubWorkflow.progress,
+              epubWorkflow.isParsing
+            )}
+            imageStyle={epubWorkflow.imageStyle}
+            onImageStyleChange={epubWorkflow.setImageStyle}
+            imageModel={epubWorkflow.imageModel}
+            onImageModelChange={epubWorkflow.setImageModel}
+            bookPreview={epubWorkflow.bookPreview}
           />
         ) : (
           <AccessCode onAccessGranted={handleAccessGranted} />
         )}
 
-        <Loading isLoading={isLoading} progress={progress} />
+        {!isComplete && (
+          <Loading
+            isLoading={epubWorkflow.isLoading}
+            isParsing={epubWorkflow.isParsing}
+            progress={epubWorkflow.progress}
+            imageModel={epubWorkflow.imageModel}
+          />
+        )}
       </div>
 
-      <footer className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted">
+      <footer className="mt-12 text-center text-sm text-muted">
         <a
           href="https://buymeacoffee.com/gregmac"
           target="_blank"
@@ -76,16 +76,6 @@ export default function AppShell() {
         >
           Buy me a coffee
         </a>
-        <span className="hidden text-border sm:inline" aria-hidden>
-          ·
-        </span>
-        <button
-          type="button"
-          onClick={handleDownloadSampleBook}
-          className="underline-offset-4 hover:text-foreground hover:underline"
-        >
-          Try the sample book
-        </button>
       </footer>
     </SiteChrome>
   );

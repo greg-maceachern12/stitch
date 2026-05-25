@@ -3,6 +3,7 @@ import { getImageModel } from "@/lib/imageModels";
 
 const GENERATE_PROMPT_API = "/api/generate-prompt";
 const GENERATE_IMAGE_API = "/api/generate-image";
+const SELECT_ILLUSTRATION_SECTIONS_API = "/api/select-illustration-sections";
 
 function routeLabel(url) {
   try {
@@ -62,4 +63,22 @@ export async function generateImageFromPrompt(prompt, imageStyle, imageModel) {
   }
 
   return data.result[0];
+}
+
+export async function selectIllustrationSections({
+  bookTitle,
+  chapterTitle,
+  imageStyle,
+  targetCount,
+  candidates,
+}) {
+  const data = await postJson(SELECT_ILLUSTRATION_SECTIONS_API, {
+    bookTitle,
+    chapterTitle,
+    imageStyle,
+    targetCount,
+    candidates,
+  });
+
+  return Array.isArray(data.sections) ? data.sections : [];
 }

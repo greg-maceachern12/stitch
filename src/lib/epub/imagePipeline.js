@@ -8,9 +8,11 @@ import {
 import {
   generateChapterImagePrompt,
   generateImageFromPrompt,
+  selectIllustrationSections,
 } from "@/lib/client/api";
 import { getImageModel } from "@/lib/imageModels";
 import { removeImages, renderChapterHtml } from "./chapters";
+import { prepareChapterForSectionIllustrations } from "./sectionIllustrations";
 
 async function mapWithConcurrency(items, concurrency, fn) {
   const results = new Array(items.length);
@@ -32,13 +34,72 @@ async function mapWithConcurrency(items, concurrency, fn) {
   return results;
 }
 
-async function generateChapterImage(
+async function generateChapterIllustrations({
+  chapter,
+  bookTitle,
+  onStep,
+  imageStyle,
+  imageModel,
+}) {
+  if (!chapter.targetCount || chapter.selectionCandidates.length === 0) {
+    return [];
+  }
+
+  onStep?.("prompt");
+  const selections = await selectIllustrationSections({
+    bookTitle,
+    chapterTitle: chapter.title,
+    imageStyle,
+    targetCount: chapter.targetCount,
+    candidates: chapter.selectionCandidates,
+  });
+
+  if (!selections.length) {
+    return [];
+  }
+
+  onStep?.("image");
+
+  const results = await Promise.all(
+    selections.map(async (selection) => {
+      try {
+        const imageUrl = await generateImageFromPrompt(
+          selection.prompt,
+          imageStyle,
+          imageModel
+        );
+
+        return {
+          ...selection,
+          imageUrl,
+        };
+      } catch (error) {
+        console.error(
+          `Section illustration failed for "${chapter.title}" at ${selection.anchorId}:`,
+          error
+        );
+        return null;
+      }
+    })
+  );
+
+  const illustrations = results.filter(Boolean);
+  if (illustrations.length === 0) {
+    throw new Error(
+      `All section illustrations failed for chapter "${chapter.title}"`
+    );
+  }
+
+  return illustrations;
+}
+
+async function generateChapterOpenerImage({
   chapterTitle,
   bookTitle,
   onStep,
   imageStyle,
-  imageModel
-) {
+  imageModel,
+}) {
   onStep?.("prompt");
   const imagePrompt = await generateChapterImagePrompt(
     bookTitle,
@@ -66,10 +127,12 @@ export async function runImagePipeline({
   concurrency = 4,
   imageStyle,
   imageModel,
+  useSectionArt = false,
   initialProgress,
   onProgress,
 }) {
   const resolvedImageModel = getImageModel(imageModel).id;
+  const sectionArtEnabled = useSectionArt === true;
   const storyHrefs = new Set(storyChapters.map((chapter) => chapter.href));
   const storyIdByHref = new Map(
     storyChapters.map((chapter, index) => [
@@ -91,11 +154,18 @@ export async function runImagePipeline({
   for (let i = 0; i < allChapters.length; i++) {
     const chapter = allChapters[i];
     const { html } = await renderChapterHtml(chapter, epubReader);
+    const prepared = sectionArtEnabled
+      ? prepareChapterForSectionIllustrations(html, i)
+      : { html: removeImages(html), selectionCandidates: [], targetCount: 0 };
 
     rendered.push({
       id: chapter.href || `chapter-${i}`,
       title: chapter.label,
-      html,
+      html: prepared.html,
+      selectionCandidates: prepared.selectionCandidates,
+      targetCount: prepared.targetCount,
+      illustrations: [],
+      imageUrl: null,
       isStory: storyHrefs.has(chapter.href),
       order: i,
     });
@@ -125,16 +195,27 @@ export async function runImagePipeline({
     reportGenerating("prompt");
 
     try {
-      chapter.imageUrl = await generateChapterImage(
-        chapter.title,
-        bookTitle,
-        reportGenerating,
-        imageStyle,
-        resolvedImageModel
-      );
+      if (sectionArtEnabled) {
+        chapter.illustrations = await generateChapterIllustrations({
+          chapter,
+          bookTitle,
+          onStep: reportGenerating,
+          imageStyle,
+          imageModel: resolvedImageModel,
+        });
+      } else {
+        chapter.imageUrl = await generateChapterOpenerImage({
+          chapterTitle: chapter.title,
+          bookTitle,
+          onStep: reportGenerating,
+          imageStyle,
+          imageModel: resolvedImageModel,
+        });
+      }
       progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.DONE);
     } catch (error) {
       console.error(`Image pipeline failed for "${chapter.title}":`, error);
+      chapter.illustrations = [];
       chapter.imageUrl = null;
       progress = setChapterStatus(progress, chapterId, CHAPTER_STATUS.ERROR);
     }
@@ -144,7 +225,8 @@ export async function runImagePipeline({
 
   return rendered.map((chapter) => ({
     title: chapter.title,
-    html: removeImages(chapter.html),
+    html: chapter.html,
+    illustrations: chapter.illustrations ?? [],
     imageUrl: chapter.imageUrl,
     order: chapter.order,
   }));

@@ -22,7 +22,7 @@ function MetaItem({ label, value }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="truncate text-sm text-foreground">{value}</dd>
+      <dd className="font-display truncate text-sm text-foreground">{value}</dd>
     </div>
   );
 }
@@ -48,26 +48,9 @@ export function BookPreviewParsing({ onDismiss, dismissDisabled }) {
 const BookPreview = ({ book, onDismiss, dismissDisabled }) => {
   if (!book) return null;
 
-  const {
-    title,
-    author,
-    cover,
-    chapterCount,
-    illustratedChapterCount,
-    fullBookUnlocked,
-    language,
-    publisher,
-  } = book;
-  const illustrateCount = illustratedChapterCount ?? chapterCount;
-  const chapterLabel = fullBookUnlocked
-    ? chapterCount === 1
-      ? "1 chapter to illustrate"
-      : `${chapterCount} chapters to illustrate (full book)`
-    : chapterCount <= illustrateCount
-      ? illustrateCount === 1
-        ? "1 chapter to illustrate"
-        : `${illustrateCount} chapters to illustrate`
-      : `${illustrateCount} of ${chapterCount} chapters to illustrate`;
+  const { title, author, cover, chapterCount, language, publisher } = book;
+  const chapterLabel =
+    chapterCount === 1 ? "1 chapter" : `${chapterCount} chapters`;
 
   return (
     <section
@@ -78,7 +61,6 @@ const BookPreview = ({ book, onDismiss, dismissDisabled }) => {
         <DismissButton onDismiss={onDismiss} disabled={dismissDisabled} />
       )}
       <div className="h-28 w-20 shrink-0 overflow-hidden rounded-sm border border-border bg-hover-surface shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={cover}
           alt={title ? `Cover of ${title}` : "Book cover"}
@@ -88,7 +70,7 @@ const BookPreview = ({ book, onDismiss, dismissDisabled }) => {
 
       <div className="min-w-0 flex-1 space-y-3">
         <div className="space-y-0.5">
-          <h2 className="text-base font-semibold leading-snug text-foreground">
+          <h2 className="text-base leading-snug text-foreground">
             {title}
           </h2>
           {author && author !== "Unknown" && (

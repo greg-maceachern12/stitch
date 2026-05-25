@@ -27,6 +27,13 @@ function logMeta(meta) {
   return entries.length ? Object.fromEntries(entries) : undefined;
 }
 
+/** One-shot log for client events (e.g. generation started). */
+export function logInfo(label, meta = {}) {
+  if (!shouldLog()) return;
+  const formatted = logMeta(meta);
+  console.log(`${PREFIX} → ${label}`, formatted ?? "");
+}
+
 /**
  * @returns {{ finish: (extra?: object) => void, fail: (error: unknown, extra?: object) => void }}
  */

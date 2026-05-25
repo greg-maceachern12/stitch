@@ -25,12 +25,37 @@ export function escapeXml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function maskEpubRelativeImgSrc(html) {
+  const replacements = [];
+
+  const masked = html.replace(
+    /(<img\b[^>]*\bsrc=")(images\/[^"]+)(")/gi,
+    (_match, before, src, after) => {
+      const id = replacements.length;
+      replacements.push(src);
+      return `${before}#visuai-epub-img-${id}${after}`;
+    }
+  );
+
+  return {
+    html: masked,
+    restore: (value) => {
+      let result = value;
+      for (let i = 0; i < replacements.length; i++) {
+        result = result.replace(`#visuai-epub-img-${i}`, replacements[i]);
+      }
+      return result;
+    },
+  };
+}
+
 function repairHtmlFragmentWithDom(html) {
+  const { html: safeHtml, restore } = maskEpubRelativeImgSrc(html);
   const template = document.createElement("template");
-  template.innerHTML = html;
+  template.innerHTML = safeHtml;
   const container = document.createElement("div");
   container.append(...template.content.childNodes);
-  return container.innerHTML;
+  return restore(container.innerHTML);
 }
 
 function normalizeVoidElementsForXhtml(html) {

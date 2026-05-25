@@ -7,7 +7,6 @@ import BookPreview, {
   DismissButton,
 } from "@/components/BookPreview";
 import OptionsPill from "@/components/OptionsPill";
-
 const FileUpload = ({
   onFileChange,
   fileError,
@@ -20,6 +19,14 @@ const FileUpload = ({
   onImageStyleChange,
   imageModel,
   onImageModelChange,
+  illustrationMode,
+  onIllustrationModeChange,
+  proUnlocked,
+  onProUnlock,
+  proUnlockError,
+  onClearProUnlockError,
+  fullBookUnlocked,
+  onFullBookChange,
   bookPreview,
   onDismissBook,
 }) => {
@@ -46,7 +53,7 @@ const FileUpload = ({
     <div className="form-card w-full space-y-6">
       <div className="space-y-2">
         <div className="relative flex items-center justify-between gap-3 overflow-visible">
-          <span className="text-sm font-medium text-foreground">
+          <span className="font-display-semibold text-sm text-foreground">
             {showUploadZone ? "Your EPUB file" : "Your book"}
           </span>
           <OptionsPill
@@ -54,6 +61,14 @@ const FileUpload = ({
             onImageStyleChange={onImageStyleChange}
             imageModel={imageModel}
             onImageModelChange={onImageModelChange}
+            illustrationMode={illustrationMode}
+            onIllustrationModeChange={onIllustrationModeChange}
+            proUnlocked={proUnlocked}
+            onProUnlock={onProUnlock}
+            proUnlockError={proUnlockError}
+            onClearProUnlockError={onClearProUnlockError}
+            fullBookUnlocked={fullBookUnlocked}
+            onFullBookChange={onFullBookChange}
             disabled={isLoading || isParsing}
           />
         </div>

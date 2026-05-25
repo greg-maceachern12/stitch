@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { fetchImageAsArrayBuffer } from "./assets";
 import { buildChapterXhtml, escapeXml } from "./xhtml";
+import { insertIllustrationsIntoHtml } from "./sectionIllustrations";
 
 const EPUB_STYLES = `body {
   font-family: Georgia, serif;
@@ -38,6 +39,27 @@ const EPUB_STYLES = `body {
   color: #555555;
 }
 
+.section-illustration {
+  margin: 1.5em 0 1.75em;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.section-illustration__image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.section-illustration__caption {
+  margin-top: 0.75em;
+  font-size: 0.85em;
+  font-style: italic;
+  color: #555555;
+}
+
 .chapter-prose {
   margin-top: 0;
 }`;
@@ -46,7 +68,13 @@ function chapterFileName(index) {
   return `chapter-${String(index + 1).padStart(3, "0")}.xhtml`;
 }
 
-function imageFileName(index) {
+function imageFileName(chapterIndex, illustrationIndex) {
+  return `images/ch-${String(chapterIndex + 1).padStart(3, "0")}-ill-${String(
+    illustrationIndex + 1
+  ).padStart(3, "0")}.jpg`;
+}
+
+function openerImageFileName(index) {
   return `images/ch-${String(index + 1).padStart(3, "0")}.jpg`;
 }
 
@@ -98,25 +126,83 @@ function addCover(oebps, cover, manifestItems, spineItems) {
   spineItems.push('<itemref idref="cover"/>');
 }
 
-async function addChapter(oebps, chapter, index, manifestItems, spineItems, navPoints) {
+async function loadChapterAssets(chapter, index) {
+  const openerPromise = chapter.imageUrl
+    ? fetchImageAsArrayBuffer(chapter.imageUrl)
+        .then((imageBuffer) => ({
+          imagePath: openerImageFileName(index),
+          imageBuffer,
+        }))
+        .catch((error) => {
+          console.error(`Skipping image for chapter "${chapter.title}":`, error);
+          return null;
+        })
+    : Promise.resolve(null);
+
+  const illustrationPromises = (chapter.illustrations ?? []).map(
+    async (illustration) => {
+      if (!illustration?.imageUrl) return null;
+
+      try {
+        return {
+          illustration,
+          imageBuffer: await fetchImageAsArrayBuffer(illustration.imageUrl),
+        };
+      } catch (error) {
+        console.error(
+          `Skipping section illustration for chapter "${chapter.title}":`,
+          error
+        );
+        return null;
+      }
+    }
+  );
+
+  const [opener, illustrationResults] = await Promise.all([
+    openerPromise,
+    Promise.all(illustrationPromises),
+  ]);
+
+  return {
+    opener,
+    illustrations: illustrationResults.filter(Boolean).map((result, i) => ({
+      ...result.illustration,
+      imagePath: imageFileName(index, i),
+      imageBuffer: result.imageBuffer,
+    })),
+  };
+}
+
+function addChapter(
+  oebps,
+  chapter,
+  index,
+  assets,
+  manifestItems,
+  spineItems,
+  navPoints
+) {
   const fileName = chapterFileName(index);
   const itemId = `chapter-${index + 1}`;
-  let imagePath = null;
+  const openerImagePath = assets.opener?.imagePath ?? null;
 
-  if (chapter.imageUrl) {
-    try {
-      const imageBuffer = await fetchImageAsArrayBuffer(chapter.imageUrl);
-      imagePath = imageFileName(index);
-      oebps.file(imagePath, imageBuffer);
-      manifestItems.push(
-        `<item id="img-${index + 1}" href="${imagePath}" media-type="image/jpeg"/>`
-      );
-    } catch (error) {
-      console.error(`Skipping image for chapter "${chapter.title}":`, error);
-    }
+  if (assets.opener) {
+    oebps.file(assets.opener.imagePath, assets.opener.imageBuffer);
+    manifestItems.push(
+      `<item id="img-${index + 1}" href="${assets.opener.imagePath}" media-type="image/jpeg"/>`
+    );
   }
 
-  const xhtml = buildChapterXhtml(chapter.title, chapter.html, imagePath);
+  for (let i = 0; i < assets.illustrations.length; i++) {
+    const illustration = assets.illustrations[i];
+    oebps.file(illustration.imagePath, illustration.imageBuffer);
+    manifestItems.push(
+      `<item id="img-${index + 1}-${i + 1}" href="${illustration.imagePath}" media-type="image/jpeg"/>`
+    );
+  }
+
+  const html = insertIllustrationsIntoHtml(chapter.html, assets.illustrations);
+  const xhtml = buildChapterXhtml(chapter.title, html, openerImagePath);
   oebps.file(fileName, xhtml);
   manifestItems.push(
     `<item id="${itemId}" href="${fileName}" media-type="application/xhtml+xml"/>`
@@ -184,11 +270,16 @@ export async function buildEpub({ title, author, cover, chapters }) {
   addStyles(oebps, manifestItems);
   addCover(oebps, cover, manifestItems, spineItems);
 
+  const chapterAssets = await Promise.all(
+    sortedChapters.map((chapter, index) => loadChapterAssets(chapter, index))
+  );
+
   for (let i = 0; i < sortedChapters.length; i++) {
-    await addChapter(
+    addChapter(
       oebps,
       sortedChapters[i],
       i,
+      chapterAssets[i],
       manifestItems,
       spineItems,
       navPoints

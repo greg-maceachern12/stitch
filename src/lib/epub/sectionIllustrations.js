@@ -1,0 +1,248 @@
+import { escapeXml } from "./xhtml";
+
+const MIN_PARAGRAPH_CHARS = 120;
+const MIN_HEADING_CHARS = 8;
+const EXCERPT_CHARS = 900;
+const MAX_SELECTION_CANDIDATES = 24;
+const MAX_ILLUSTRATIONS_PER_CHAPTER = 3;
+
+const CANDIDATE_SELECTOR = "h2, h3, h4, h5, h6, p";
+const SKIP_TEXT_PATTERNS = [
+  /^chapter\s+\d+$/i,
+  /^contents?$/i,
+  /^copyright$/i,
+  /^all rights reserved/i,
+  /^isbn\b/i,
+  /^www\./i,
+  /^https?:\/\//i,
+];
+
+function normalizeWhitespace(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function compactExcerpt(value, max = EXCERPT_CHARS) {
+  const text = normalizeWhitespace(value);
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+function isHeading(element) {
+  return /^H[2-6]$/i.test(element.tagName);
+}
+
+function isMeaningfulText(text, element) {
+  if (!text) return false;
+  if (SKIP_TEXT_PATTERNS.some((pattern) => pattern.test(text))) return false;
+  if (isHeading(element)) return text.length >= MIN_HEADING_CHARS;
+  return text.length >= MIN_PARAGRAPH_CHARS;
+}
+
+function contextTextFor(element) {
+  const pieces = [normalizeWhitespace(element.textContent)];
+
+  if (isHeading(element)) {
+    let sibling = element.nextElementSibling;
+    while (sibling && pieces.join(" ").length < EXCERPT_CHARS) {
+      if (sibling.matches?.("p, h2, h3, h4, h5, h6")) {
+        const text = normalizeWhitespace(sibling.textContent);
+        if (text) pieces.push(text);
+        if (/^H[2-6]$/i.test(sibling.tagName)) break;
+      }
+      sibling = sibling.nextElementSibling;
+    }
+  }
+
+  return compactExcerpt(pieces.join(" "));
+}
+
+function candidateScore(candidate) {
+  const text = candidate.excerpt.toLowerCase();
+  const quotedText = (candidate.excerpt.match(/[“”"]/g) || []).length;
+  const sensoryWords = [
+    "blood",
+    "fire",
+    "light",
+    "dark",
+    "shadow",
+    "forest",
+    "street",
+    "room",
+    "door",
+    "sky",
+    "storm",
+    "river",
+    "mountain",
+    "sword",
+    "horse",
+    "ship",
+    "castle",
+    "garden",
+    "gold",
+    "smoke",
+  ].filter((word) => text.includes(word)).length;
+
+  return candidate.excerpt.length + sensoryWords * 80 - quotedText * 12;
+}
+
+export function getTargetIllustrationCount(candidateCount) {
+  const total = Math.max(0, Number(candidateCount) || 0);
+  if (total <= 0) return 0;
+  if (total < 8) return 1;
+  if (total < 18) return 2;
+  return MAX_ILLUSTRATIONS_PER_CHAPTER;
+}
+
+export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
+  const template = document.createElement("template");
+  template.innerHTML = html || "";
+
+  template.content.querySelectorAll("img, figure, picture, svg").forEach((node) => {
+    node.remove();
+  });
+
+  const candidates = [];
+  const elements = Array.from(template.content.querySelectorAll(CANDIDATE_SELECTOR));
+
+  elements.forEach((element, index) => {
+    const text = normalizeWhitespace(element.textContent);
+    if (!isMeaningfulText(text, element)) return;
+
+    const anchorId = `visuai-ch-${chapterIndex + 1}-sec-${candidates.length + 1}`;
+    element.setAttribute("data-visuai-anchor", anchorId);
+
+    candidates.push({
+      anchorId,
+      index,
+      kind: element.tagName.toLowerCase(),
+      text,
+      excerpt: contextTextFor(element),
+    });
+  });
+
+  const rankedCandidates = [...candidates]
+    .sort((a, b) => candidateScore(b) - candidateScore(a))
+    .slice(0, MAX_SELECTION_CANDIDATES)
+    .sort((a, b) => a.index - b.index);
+
+  return {
+    html: template.innerHTML,
+    candidates,
+    selectionCandidates: rankedCandidates,
+    targetCount: getTargetIllustrationCount(candidates.length),
+  };
+}
+
+export function buildFallbackSectionSelections({
+  bookTitle,
+  chapterTitle,
+  imageStyle,
+  candidates,
+  targetCount,
+}) {
+  const count = Math.min(
+    Math.max(0, Number(targetCount) || 0),
+    MAX_ILLUSTRATIONS_PER_CHAPTER,
+    candidates.length
+  );
+
+  return [...candidates]
+    .sort((a, b) => candidateScore(b) - candidateScore(a))
+    .slice(0, count)
+    .sort((a, b) => a.index - b.index)
+    .map((candidate, index) => ({
+      anchorId: candidate.anchorId,
+      prompt: [
+        `Illustrate this moment from ${bookTitle || "the book"}, chapter "${chapterTitle || "Untitled"}".`,
+        candidate.excerpt,
+        `Create a scene-specific ${imageStyle || "illustration"} image with atmospheric surroundings, objects, lighting, and composition. Avoid close-up character faces.`,
+      ].join(" "),
+      altText: `Illustration for section ${index + 1} of ${chapterTitle || "this chapter"}`,
+      caption: "Section illustration",
+    }));
+}
+
+export function normalizeSectionSelections(selections, candidates, targetCount) {
+  const allowedAnchors = new Set(candidates.map((candidate) => candidate.anchorId));
+  const seenAnchors = new Set();
+  const count = Math.min(
+    Math.max(0, Number(targetCount) || 0),
+    MAX_ILLUSTRATIONS_PER_CHAPTER
+  );
+
+  if (!Array.isArray(selections) || count === 0) return [];
+
+  return selections
+    .filter((selection) => {
+      const anchorId = selection?.anchorId;
+      if (!allowedAnchors.has(anchorId) || seenAnchors.has(anchorId)) {
+        return false;
+      }
+      seenAnchors.add(anchorId);
+      return true;
+    })
+    .slice(0, count)
+    .map((selection, index) => ({
+      anchorId: selection.anchorId,
+      prompt: normalizeWhitespace(selection.prompt),
+      altText:
+        normalizeWhitespace(selection.altText) ||
+        `Illustration for selected chapter section ${index + 1}`,
+      caption: normalizeWhitespace(selection.caption) || "Section illustration",
+    }))
+    .filter((selection) => selection.prompt.length > 0);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildIllustrationFigureHtml(illustration, src) {
+  const alt = escapeXml(illustration.altText || "Section illustration");
+  const caption = illustration.caption
+    ? `<figcaption class="section-illustration__caption">${escapeXml(illustration.caption)}</figcaption>`
+    : "";
+
+  return `<figure class="section-illustration" epub:type="figure"><img class="section-illustration__image" src="${escapeXml(src)}" alt="${alt}"/>${caption}</figure>`;
+}
+
+/**
+ * Inserts illustration markup as HTML strings (not live DOM nodes) so the browser
+ * does not request EPUB-relative paths like /images/ch-001-ill-001.jpg during
+ * client-side assembly.
+ */
+export function insertIllustrationsIntoHtml(html, illustrations = []) {
+  if (!illustrations.length) return html || "";
+
+  const anchored = illustrations
+    .filter(
+      (illustration) =>
+        illustration?.anchorId &&
+        (illustration.imagePath || illustration.imageUrl)
+    )
+    .map((illustration) => ({
+      illustration,
+      position: (html || "").indexOf(
+        `data-visuai-anchor="${illustration.anchorId}"`
+      ),
+    }))
+    .filter((entry) => entry.position >= 0)
+    .sort((a, b) => b.position - a.position);
+
+  if (!anchored.length) return html || "";
+
+  let result = html || "";
+
+  for (const { illustration } of anchored) {
+    const src = illustration.imagePath ?? illustration.imageUrl;
+    const figureHtml = buildIllustrationFigureHtml(illustration, src);
+    const anchorPattern = new RegExp(
+      `(<[^>]+data-visuai-anchor="${escapeRegExp(illustration.anchorId)}"[^>]*>)`,
+      "i"
+    );
+
+    result = result.replace(anchorPattern, `${figureHtml}$1`);
+  }
+
+  return result;
+}

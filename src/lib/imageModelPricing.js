@@ -64,27 +64,27 @@ export function formatPerImageCost(modelId) {
   return `~${formatUsd(getImageCostUsd(modelId))}/img`;
 }
 
-export function estimateIllustrationCostUsd(modelId, chapterCount) {
-  const chapters = Math.max(0, Number(chapterCount) || 0);
-  return getImageCostUsd(modelId) * chapters;
+export function estimateIllustrationCostUsd(modelId, imageCount) {
+  const images = Math.max(0, Number(imageCount) || 0);
+  return getImageCostUsd(modelId) * images;
 }
 
-export function formatIllustrationCostEstimate(modelId, chapterCount) {
+export function formatIllustrationCostEstimate(modelId, imageCount) {
   const perImage = getImageCostUsd(modelId);
-  const total = estimateIllustrationCostUsd(modelId, chapterCount);
-  const chapters = Math.max(0, Number(chapterCount) || 0);
+  const total = estimateIllustrationCostUsd(modelId, imageCount);
+  const images = Math.max(0, Number(imageCount) || 0);
 
-  if (chapters === 0) {
+  if (images === 0) {
     return `~${formatUsd(perImage)} per illustration`;
   }
 
-  const chapterLabel = chapters === 1 ? "1 chapter" : `${chapters} chapters`;
-  return `~${formatUsd(total)} for ${chapterLabel} (~${formatUsd(perImage)} each)`;
+  const imageLabel = images === 1 ? "1 image" : `up to ${images} images`;
+  return `~${formatUsd(total)} for ${imageLabel} (~${formatUsd(perImage)} each)`;
 }
 
-/** Total illustration price for display (e.g. "$0.55"). Returns null when chapterCount is 0. */
-export function formatIllustrationPrice(modelId, chapterCount) {
-  const chapters = Math.max(0, Number(chapterCount) || 0);
-  if (chapters === 0) return null;
-  return formatUsd(estimateIllustrationCostUsd(modelId, chapterCount));
+/** Total illustration price for display (e.g. "$0.55"). Returns null when imageCount is 0. */
+export function formatIllustrationPrice(modelId, imageCount) {
+  const images = Math.max(0, Number(imageCount) || 0);
+  if (images === 0) return null;
+  return formatUsd(estimateIllustrationCostUsd(modelId, imageCount));
 }

@@ -1,11 +1,5 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+import { fontVariables, openSans } from "@/lib/fonts";
 
 export const metadata = {
   title: "Visuai",
@@ -14,8 +8,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+    <html lang="en" className={fontVariables}>
+      <body className={`${openSans.className} min-h-screen bg-background text-foreground`}>
         {children}
         <div
           id="hiddenDiv"

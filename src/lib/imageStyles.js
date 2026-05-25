@@ -61,7 +61,7 @@ export function getImageStyle(styleId) {
   return { id, ...IMAGE_STYLES[id] };
 }
 
-/** Absolute URL for OpenRouter to fetch hosted style references. */
+/** Absolute URL for a style reference (display / legacy). Image generation inlines local files via `resolveStyleReferenceForApi`. */
 export function resolveStyleReferenceUrl(pathOrUrl) {
   if (!pathOrUrl || typeof pathOrUrl !== "string") {
     return pathOrUrl;

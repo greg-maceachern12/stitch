@@ -7,6 +7,7 @@ import FileUpload from "@/components/FileUpload";
 import Loading from "@/components/Loading";
 import CompleteCard from "@/components/CompleteCard";
 import AccessCode from "@/components/AccessCode";
+import VisuaiProChiclet, { useVisuaiProModal } from "@/components/VisuaiProChiclet";
 import { useIllustratedEpub } from "@/lib/client/useIllustratedEpub";
 import {
   canStartVisualization,
@@ -17,6 +18,7 @@ import {
 export default function AppShell() {
   const [isAccessGranted, setIsAccessGranted] = useState(true);
   const epubWorkflow = useIllustratedEpub();
+  const proModal = useVisuaiProModal();
 
   const handleAccessGranted = () => setIsAccessGranted(true);
   const isComplete = epubWorkflow.progress?.phase === PHASES.COMPLETE;
@@ -29,7 +31,7 @@ export default function AppShell() {
   return (
     <SiteChrome variant="form">
       <header className="mb-10 w-full space-y-3 text-center">
-        <h1 className="flex flex-col items-center gap-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+        <h1 className="flex flex-col items-center gap-3 text-3xl font-semibold text-foreground md:text-4xl">
           <span
             className="flex items-center justify-center gap-3 text-4xl md:gap-4 md:text-5xl"
             aria-hidden="true"
@@ -45,17 +47,22 @@ export default function AppShell() {
           Turn words into worlds
         </h1>
         <p className="mx-auto max-w-md text-base text-muted">
-          Upload an EPUB and Visuai will add AI illustrations to the first three chapters —
-          free for a limited time.
+          Upload an EPUB and Visuai will create illustation for each chapter.
         </p>
+        <div className="flex justify-center pt-1">
+          <VisuaiProChiclet modalControl={proModal} />
+        </div>
       </header>
 
       <div className="w-full space-y-6">
         {isComplete ? (
           <CompleteCard
             bookTitle={epubWorkflow.completedDownload?.title}
+            cover={epubWorkflow.completedDownload?.cover}
             illustratedCount={illustratedCount}
             onRedownload={epubWorkflow.redownload}
+            showProUpsell={!epubWorkflow.proUnlocked}
+            onOpenPro={proModal.openModal}
           />
         ) : isAccessGranted ? (
           <FileUpload
@@ -74,6 +81,14 @@ export default function AppShell() {
             onImageStyleChange={epubWorkflow.setImageStyle}
             imageModel={epubWorkflow.imageModel}
             onImageModelChange={epubWorkflow.setImageModel}
+            illustrationMode={epubWorkflow.illustrationMode}
+            onIllustrationModeChange={epubWorkflow.setIllustrationMode}
+            proUnlocked={epubWorkflow.proUnlocked}
+            onProUnlock={epubWorkflow.unlockPro}
+            proUnlockError={epubWorkflow.proUnlockError}
+            onClearProUnlockError={epubWorkflow.clearProUnlockError}
+            fullBookUnlocked={epubWorkflow.fullBookUnlocked}
+            onFullBookChange={epubWorkflow.setFullBookEnabled}
             bookPreview={epubWorkflow.bookPreview}
           />
         ) : (
@@ -86,9 +101,8 @@ export default function AppShell() {
             isParsing={epubWorkflow.isParsing}
             progress={epubWorkflow.progress}
             imageModel={epubWorkflow.imageModel}
-            onUnlockFullBook={epubWorkflow.unlockFullBook}
-            onClearUnlockError={epubWorkflow.clearUnlockError}
-            unlockError={epubWorkflow.unlockError}
+            illustrationMode={epubWorkflow.illustrationMode}
+            onOpenPro={proModal.openModal}
           />
         )}
       </div>

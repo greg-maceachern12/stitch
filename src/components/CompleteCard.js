@@ -4,12 +4,15 @@ import { CheckCircle2, Download } from "lucide-react";
 
 export default function CompleteCard({
   bookTitle,
+  cover,
   illustratedCount,
   onRedownload,
+  showProUpsell = false,
+  onOpenPro,
 }) {
   const chapterSummary =
     illustratedCount != null && illustratedCount > 0
-      ? `${illustratedCount} chapter${illustratedCount === 1 ? "" : "s"} illustrated`
+      ? `Section art added to ${illustratedCount} chapter${illustratedCount === 1 ? "" : "s"}`
       : null;
 
   return (
@@ -25,7 +28,7 @@ export default function CompleteCard({
           <p className="text-xs font-medium uppercase tracking-wider text-emerald-700">
             Illustration complete
           </p>
-          <h2 className="text-lg font-semibold leading-snug text-foreground">
+          <h2 className="text-lg leading-snug text-foreground">
             We drew all over your book.
           </h2>
           <p className="text-sm leading-relaxed text-muted">
@@ -35,11 +38,20 @@ export default function CompleteCard({
       </div>
 
       {bookTitle && (
-        <div className="mt-5 rounded-lg border border-border bg-background px-4 py-3">
-          <dl className="min-w-0 space-y-2">
+        <div className="mt-5 flex gap-4 rounded-lg border border-border bg-background p-4">
+          {cover && (
+            <div className="h-28 w-20 shrink-0 overflow-hidden rounded-sm border border-border bg-hover-surface shadow-sm">
+              <img
+                src={cover}
+                alt={bookTitle ? `Cover of ${bookTitle}` : "Book cover"}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+          <dl className="min-w-0 flex-1 space-y-2">
             <div>
               <dt className="text-xs text-muted">Book</dt>
-              <dd className="truncate text-sm font-medium text-foreground">
+              <dd className="font-display-semibold truncate text-sm text-foreground">
                 {bookTitle}
               </dd>
             </div>
@@ -63,6 +75,19 @@ export default function CompleteCard({
           or downloads folder for the illustrated EPUB.
         </p>
       </div>
+
+      {showProUpsell && onOpenPro && (
+        <p className="mt-5 text-sm leading-relaxed text-muted">
+          Want more?{" "}
+          <button
+            type="button"
+            onClick={onOpenPro}
+            className="font-medium text-[var(--pro-blue)] underline-offset-2 transition-colors hover:text-[var(--pro-navy)] hover:underline"
+          >
+            Unlock the entire book and more with Pro
+          </button>
+        </p>
+      )}
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">Didn&apos;t get a file?</p>

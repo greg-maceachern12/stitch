@@ -1,5 +1,6 @@
 import { getImageSizeForModel } from "@/lib/imageModels";
-import { getImageStyle, resolveStyleReferenceUrl } from "@/lib/imageStyles";
+import { getImageStyle } from "@/lib/imageStyles";
+import { resolveStyleReferenceForApi } from "@/lib/server/styleReference";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload, truncate } from "./logger";
 import {
@@ -11,15 +12,19 @@ import {
 const PLACEHOLDER_IMAGE =
   "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
 
-function buildImageGenerationContent(promptText, style, includeReferenceImage) {
+function buildImageGenerationContent(
+  promptText,
+  style,
+  includeReferenceImage,
+  referenceDataUrl
+) {
   const content = [{ type: "text", text: promptText }];
 
-  const referenceUrl = resolveStyleReferenceUrl(style.referenceImageUrl);
-  if (includeReferenceImage && referenceUrl && style.referenceInstruction) {
+  if (includeReferenceImage && referenceDataUrl && style.referenceInstruction) {
     content[0].text = `${promptText} ${style.referenceInstruction}`;
     content.push({
       type: "image_url",
-      imageUrl: { url: referenceUrl },
+      imageUrl: { url: referenceDataUrl },
     });
   }
 
@@ -55,12 +60,60 @@ function extractImageUrls(message) {
     .filter((url) => typeof url === "string" && url.length > 0);
 }
 
+/** Log-friendly view of the assistant message (no full data URLs). */
+function summarizeAssistantMessage(message) {
+  if (!message || typeof message !== "object") {
+    return { present: false };
+  }
+
+  const images = message.images;
+  const imageEntries = Array.isArray(images)
+    ? images.map((image, index) => {
+        const url = image?.imageUrl?.url ?? image?.image_url?.url;
+        if (typeof url !== "string" || url.length === 0) {
+          return { index, url: null, keys: Object.keys(image || {}) };
+        }
+        if (url.startsWith("data:")) {
+          return { index, urlType: "data", urlLength: url.length };
+        }
+        return { index, urlType: "remote", urlPreview: truncate(url, 80) };
+      })
+    : null;
+
+  const content = message.content;
+  let contentPreview = "";
+  if (typeof content === "string") {
+    contentPreview = truncate(content, 200);
+  } else if (content != null) {
+    contentPreview = truncate(JSON.stringify(content), 200);
+  }
+
+  return {
+    role: message.role,
+    finishReason: message.finish_reason ?? message.finishReason,
+    messageKeys: Object.keys(message),
+    contentLength: typeof content === "string" ? content.length : null,
+    contentPreview,
+    imageCount: Array.isArray(images) ? images.length : 0,
+    images: imageEntries,
+  };
+}
+
+function urlsFromResponse(response) {
+  const message = response?.choices?.[0]?.message;
+  return {
+    urls: extractImageUrls(message),
+    message,
+  };
+}
+
 async function sendImageRequest({
   client,
   model,
   fullPrompt,
   style,
   includeReferenceImage,
+  referenceDataUrl,
 }) {
   return client.chat.send({
     chatRequest: {
@@ -73,7 +126,8 @@ async function sendImageRequest({
           content: buildImageGenerationContent(
             fullPrompt,
             style,
-            includeReferenceImage
+            includeReferenceImage,
+            referenceDataUrl
           ),
         },
       ],
@@ -99,9 +153,23 @@ export async function generateImage(prompt, imageStyle, imageModel) {
   const model = getOpenRouterImageModel(imageModel);
   const client = requireOpenRouterClient("Image generation route");
   const fullPrompt = `${prompt.trim()}${style.promptSuffix}`;
-  const hasReferenceImage = Boolean(
-    resolveStyleReferenceUrl(style.referenceImageUrl) && style.referenceInstruction
+  const wantsReferenceImage = Boolean(
+    style.referenceImageUrl && style.referenceInstruction
   );
+  let referenceDataUrl = null;
+  if (wantsReferenceImage) {
+    try {
+      referenceDataUrl = await resolveStyleReferenceForApi(
+        style.referenceImageUrl
+      );
+    } catch (error) {
+      console.warn(
+        "Could not load style reference from disk; generating without reference.",
+        { style: style.id, error: error.message }
+      );
+    }
+  }
+  const hasReferenceImage = Boolean(referenceDataUrl);
 
   const log = logApiCall("OpenRouter image", {
     provider: "openrouter",
@@ -116,18 +184,22 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     }),
   });
 
+  const baseRequest = {
+    client,
+    model,
+    fullPrompt,
+    style,
+    includeReferenceImage: hasReferenceImage,
+    referenceDataUrl,
+  };
+
   try {
-    let response;
     let retriedWithoutReference = false;
+    let retriedEmptyResponse = false;
+    let response;
 
     try {
-      response = await sendImageRequest({
-        client,
-        model,
-        fullPrompt,
-        style,
-        includeReferenceImage: hasReferenceImage,
-      });
+      response = await sendImageRequest(baseRequest);
     } catch (error) {
       if (!hasReferenceImage || !isProviderError(error)) {
         throw error;
@@ -143,29 +215,40 @@ export async function generateImage(prompt, imageStyle, imageModel) {
         }
       );
       response = await sendImageRequest({
-        client,
-        model,
-        fullPrompt,
-        style,
+        ...baseRequest,
         includeReferenceImage: false,
+        referenceDataUrl: null,
       });
     }
 
-    const urls = extractImageUrls(response.choices?.[0]?.message);
+    let { urls, message } = urlsFromResponse(response);
+    const activeRequest = retriedWithoutReference
+      ? { ...baseRequest, includeReferenceImage: false, referenceDataUrl: null }
+      : baseRequest;
+
+    if (urls.length === 0) {
+      console.warn(
+        "OpenRouter returned no image URLs; retrying once with the same request.",
+        { model, message: summarizeAssistantMessage(message) }
+      );
+      retriedEmptyResponse = true;
+      response = await sendImageRequest(activeRequest);
+      ({ urls, message } = urlsFromResponse(response));
+    }
+
     if (urls.length > 0) {
       log.finish({
         images: urls.length,
         retriedWithoutReference,
+        retriedEmptyResponse,
       });
       return urls;
     }
 
     log.fail(new ApiError("No image URL returned from provider", 502), {
       status: 502,
-      response: truncate(
-        response.choices?.[0]?.message?.content || "",
-        200
-      ),
+      message: summarizeAssistantMessage(message),
+      retriedEmptyResponse,
     });
     throw new ApiError("No image URL returned from provider", 502);
   } catch (error) {

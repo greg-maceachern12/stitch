@@ -1,4 +1,5 @@
 export const MAX_ILLUSTRATED_CHAPTERS = 3;
+export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 3;
 
 export const CHAPTER_STATUS = {
   PENDING: "pending",
@@ -27,26 +28,40 @@ export const PHASES = {
   ERROR: "error",
 };
 
-const CHAPTER_STATUS_LABEL = {
-  [CHAPTER_STATUS.PENDING]: "Waiting",
-  [CHAPTER_STATUS.PROMPT]: "Writing art direction",
-  [CHAPTER_STATUS.IMAGE]: "Rendering illustration",
-  [CHAPTER_STATUS.DONE]: "Illustrated",
-  [CHAPTER_STATUS.SKIPPED]: "Skipped",
-  [CHAPTER_STATUS.LOCKED]: "Locked",
-  [CHAPTER_STATUS.ERROR]: "Failed",
+const CHAPTER_STATUS_LABELS = {
+  chapterOpener: {
+    [CHAPTER_STATUS.PENDING]: "Waiting",
+    [CHAPTER_STATUS.PROMPT]: "Writing chapter prompt",
+    [CHAPTER_STATUS.IMAGE]: "Rendering chapter art",
+    [CHAPTER_STATUS.DONE]: "Illustrated",
+    [CHAPTER_STATUS.SKIPPED]: "Skipped",
+    [CHAPTER_STATUS.LOCKED]: "Locked",
+    [CHAPTER_STATUS.ERROR]: "Failed",
+  },
+  sectionArt: {
+    [CHAPTER_STATUS.PENDING]: "Waiting",
+    [CHAPTER_STATUS.PROMPT]: "Choosing sections",
+    [CHAPTER_STATUS.IMAGE]: "Rendering section art",
+    [CHAPTER_STATUS.DONE]: "Illustrated",
+    [CHAPTER_STATUS.SKIPPED]: "Skipped",
+    [CHAPTER_STATUS.LOCKED]: "Locked",
+    [CHAPTER_STATUS.ERROR]: "Failed",
+  },
 };
 
 const STITCH_LABEL = "Stitch book together";
 
-export function chapterStatusLabel(status, phase) {
+export function chapterStatusLabel(status, phase, sectionArtEnabled = false) {
   if (phase === PHASES.READY && status === CHAPTER_STATUS.PENDING) {
     return "Ready";
   }
   if (status === CHAPTER_STATUS.LOCKED) {
     return "Locked";
   }
-  return CHAPTER_STATUS_LABEL[status] ?? "Waiting";
+  const labels = sectionArtEnabled
+    ? CHAPTER_STATUS_LABELS.sectionArt
+    : CHAPTER_STATUS_LABELS.chapterOpener;
+  return labels[status] ?? "Waiting";
 }
 
 export function getIllustrationChapterCount(chapterCount, fullBookUnlocked = false) {
@@ -55,11 +70,29 @@ export function getIllustrationChapterCount(chapterCount, fullBookUnlocked = fal
   return Math.min(MAX_ILLUSTRATED_CHAPTERS, total);
 }
 
+export function getEstimatedSectionIllustrationCount(
+  chapterCount,
+  fullBookUnlocked = false
+) {
+  return (
+    getIllustrationChapterCount(chapterCount, fullBookUnlocked) *
+    MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER
+  );
+}
+
 export function hasLockedChapters(chapters = []) {
   return chapters.some((chapter) => chapter.status === CHAPTER_STATUS.LOCKED);
 }
 
-export function applyFullBookUnlock(progress) {
+function readyMessage(storyChapters, fullBookUnlocked, sectionArtEnabled = false) {
+  const placement = sectionArtEnabled ? "section art" : "a chapter illustration";
+  if (fullBookUnlocked || storyChapters.length <= MAX_ILLUSTRATED_CHAPTERS) {
+    return `Ready — click Visualize to add ${placement} throughout`;
+  }
+  return `Ready — click Visualize to add ${placement} to the first ${MAX_ILLUSTRATED_CHAPTERS} chapters`;
+}
+
+export function applyFullBookUnlock(progress, sectionArtEnabled = false) {
   const chapters = progress.chapters.map((chapter) =>
     chapter.status === CHAPTER_STATUS.LOCKED
       ? { ...chapter, status: CHAPTER_STATUS.PENDING }
@@ -69,10 +102,42 @@ export function applyFullBookUnlock(progress) {
   return {
     ...progress,
     fullBookUnlocked: true,
+    sectionArtEnabled,
     chapters,
     message:
       progress.phase === PHASES.READY
-        ? "Full book unlocked — click Visualize to illustrate every chapter"
+        ? readyMessage(
+            progress.chapters,
+            true,
+            sectionArtEnabled ?? progress.sectionArtEnabled
+          )
+        : progress.message,
+  };
+}
+
+export function applyFullBookLock(progress, sectionArtEnabled = false) {
+  const chapters = progress.chapters.map((chapter, index) => ({
+    ...chapter,
+    status:
+      index < MAX_ILLUSTRATED_CHAPTERS
+        ? chapter.status === CHAPTER_STATUS.LOCKED
+          ? CHAPTER_STATUS.PENDING
+          : chapter.status
+        : CHAPTER_STATUS.LOCKED,
+  }));
+
+  return {
+    ...progress,
+    fullBookUnlocked: false,
+    sectionArtEnabled,
+    chapters,
+    message:
+      progress.phase === PHASES.READY
+        ? readyMessage(
+            progress.chapters,
+            false,
+            sectionArtEnabled ?? progress.sectionArtEnabled
+          )
         : progress.message,
   };
 }
@@ -100,17 +165,27 @@ function buildChapterEntries(storyChapters, fullBookUnlocked = false) {
   }));
 }
 
-function readyMessage(storyChapters, fullBookUnlocked) {
-  if (fullBookUnlocked || storyChapters.length <= MAX_ILLUSTRATED_CHAPTERS) {
-    return "Ready — click Visualize to illustrate every chapter";
+export function withReadyPlacement(progress, sectionArtEnabled = false) {
+  if (progress?.phase !== PHASES.READY) {
+    return progress;
   }
-  return `Ready — click Visualize to illustrate the first ${MAX_ILLUSTRATED_CHAPTERS} chapters`;
+
+  return {
+    ...progress,
+    sectionArtEnabled,
+    message: readyMessage(
+      progress.chapters,
+      progress.fullBookUnlocked,
+      sectionArtEnabled
+    ),
+  };
 }
 
 export function createReadyProgress(
   bookTitle,
   storyChapters,
-  fullBookUnlocked = false
+  fullBookUnlocked = false,
+  sectionArtEnabled = false
 ) {
   const chapters = buildChapterEntries(storyChapters, fullBookUnlocked);
 
@@ -118,10 +193,11 @@ export function createReadyProgress(
     phase: PHASES.READY,
     bookTitle,
     fullBookUnlocked,
+    sectionArtEnabled,
     isPreparing: false,
     chapters,
     stitching: { status: STITCH_STATUS.PENDING, label: STITCH_LABEL },
-    message: readyMessage(storyChapters, fullBookUnlocked),
+    message: readyMessage(storyChapters, fullBookUnlocked, sectionArtEnabled),
     percent: 0,
   };
 }
@@ -172,7 +248,7 @@ export function setChapterStatus(progress, chapterId, status) {
 
   const active = chapters.find((c) => c.status === status && c.id === chapterId);
   const message = active
-    ? `${chapterStatusLabel(status)} — “${truncate(active.title, 40)}”`
+    ? `${chapterStatusLabel(status, progress.phase, progress.sectionArtEnabled)} — “${truncate(active.title, 40)}”`
     : progress.message;
 
   return {

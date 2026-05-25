@@ -9,14 +9,14 @@ function About() {
     <SiteChrome variant="default">
       <article className="w-full">
         <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">About Visuai</h1>
+          <h1 className="text-4xl text-foreground">About Visuai</h1>
           <Link href="/" className="btn-ghost shrink-0 self-start">
             <ArrowLeft className="h-4 w-4" />
             Back to app
           </Link>
         </header>
 
-        <div className="prose prose-neutral max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
+        <div className="prose prose-neutral max-w-none prose-headings:font-serif prose-h2:font-semibold prose-h3:font-normal prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
           <p>
             Visuai started while I was deep in a stack of recent fiction — the Dune series,
             The Way of Kings, Eragon — and noticing how much work the authors put into

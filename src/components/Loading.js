@@ -10,15 +10,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatIllustrationPrice } from "@/lib/imageModelPricing";
-import UnlockFullBook from "@/components/UnlockFullBook";
+import { isSectionArtMode } from "@/lib/illustrationModes";
 import {
   CHAPTER_STATUS,
   STITCH_STATUS,
   PHASES,
   chapterStatusLabel,
+  getEstimatedSectionIllustrationCount,
   getIllustrationChapterCount,
   hasLockedChapters,
   isTerminalPhase,
+  MAX_ILLUSTRATED_CHAPTERS,
   shouldShowProgressPanel,
 } from "@/lib/generationProgress";
 
@@ -45,7 +47,9 @@ function StatusIcon({ status }) {
   }
 
   if (status === CHAPTER_STATUS.LOCKED) {
-    return <Lock className="h-4 w-4 shrink-0 text-muted" aria-hidden />;
+    return (
+      <Lock className="h-4 w-4 shrink-0 text-[var(--locked)]" aria-hidden />
+    );
   }
 
   if (
@@ -64,6 +68,30 @@ function StatusIcon({ status }) {
   return <Circle className="h-4 w-4 shrink-0 text-muted/40" aria-hidden />;
 }
 
+function ChapterLimitBanner({ onOpenPro }) {
+  return (
+    <p
+      className="rounded-md border border-[var(--locked)]/30 bg-[var(--locked)]/[0.07] px-2.5 py-1.5 text-center text-[11px] font-medium leading-snug text-[var(--locked)]"
+      role="status"
+    >
+      Only the first {MAX_ILLUSTRATED_CHAPTERS} chapters will be illustrated.
+      {onOpenPro ? (
+        <>
+          {" "}
+          To unlock the full book,{" "}
+          <button
+            type="button"
+            onClick={onOpenPro}
+            className="font-medium underline underline-offset-2 transition-colors hover:text-[var(--pro-navy)]"
+          >
+            go Pro
+          </button>
+        </>
+      ) : null}
+    </p>
+  );
+}
+
 function IllustrationCost({ price }) {
   if (!price) return null;
 
@@ -73,9 +101,9 @@ function IllustrationCost({ price }) {
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/8 text-accent">
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
         </span>
-        <span className="text-xs font-medium text-muted">Illustration cost</span>
+        <span className="font-display text-xs text-muted">Estimated art cost</span>
       </div>
-      <span className="shrink-0 text-base font-semibold tabular-nums tracking-tight text-foreground">
+      <span className="font-display-semibold shrink-0 text-base tabular-nums text-foreground">
         {price}
       </span>
     </div>
@@ -87,9 +115,8 @@ const Loading = ({
   isParsing,
   progress,
   imageModel,
-  onUnlockFullBook,
-  onClearUnlockError,
-  unlockError,
+  illustrationMode,
+  onOpenPro,
 }) => {
   if (!shouldShowProgressPanel(progress, isLoading || isParsing)) return null;
 
@@ -102,22 +129,27 @@ const Loading = ({
     stitching,
     isPreparing,
     fullBookUnlocked,
+    sectionArtEnabled: progressSectionArt,
   } = progress;
+  const sectionArtEnabled =
+    progressSectionArt ?? isSectionArtMode(illustrationMode);
   const isError = phase === PHASES.ERROR;
   const isComplete = phase === PHASES.COMPLETE;
   const isReady = phase === PHASES.READY;
   const showChapterList = chapters.length > 0 && !isError;
+  const showChapterLimitBanner =
+    showChapterList && hasLockedChapters(chapters);
   const showPercentBar = !isError && !isReady && phase !== PHASES.PARSING;
-  const showUnlockForm =
-    isReady &&
-    hasLockedChapters(chapters) &&
-    !fullBookUnlocked &&
-    typeof onUnlockFullBook === "function";
   const illustrationPrice =
     showChapterList && imageModel
       ? formatIllustrationPrice(
           imageModel,
-          getIllustrationChapterCount(chapters.length, fullBookUnlocked)
+          sectionArtEnabled
+            ? getEstimatedSectionIllustrationCount(
+                chapters.length,
+                fullBookUnlocked
+              )
+            : getIllustrationChapterCount(chapters.length, fullBookUnlocked)
         )
       : null;
 
@@ -131,7 +163,7 @@ const Loading = ({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           {bookTitle && (
-            <p className="truncate text-sm font-medium text-foreground">
+            <p className="font-display-semibold truncate text-lg leading-snug text-foreground">
               {bookTitle}
             </p>
           )}
@@ -154,7 +186,11 @@ const Loading = ({
       )}
 
       {showChapterList && (
-        <ol className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-surface/50 p-2">
+        <div className="space-y-2">
+          {showChapterLimitBanner && (
+            <ChapterLimitBanner onOpenPro={onOpenPro} />
+          )}
+          <ol className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-surface/50 p-2">
           {isPreparing && (
             <li className="flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted">
               <Loader2
@@ -179,7 +215,7 @@ const Loading = ({
                 <StatusIcon status={chapter.status} />
                 <div className="min-w-0 flex-1">
                   <p
-                    className={`truncate font-medium ${
+                    className={`font-display truncate ${
                       chapter.status === CHAPTER_STATUS.PENDING ||
                       chapter.status === CHAPTER_STATUS.LOCKED
                         ? "text-muted"
@@ -189,7 +225,7 @@ const Loading = ({
                     {chapter.title}
                   </p>
                   <p className="text-xs text-muted">
-                    {chapterStatusLabel(chapter.status, phase)}
+                    {chapterStatusLabel(chapter.status, phase, sectionArtEnabled)}
                   </p>
                 </div>
               </li>
@@ -207,7 +243,7 @@ const Loading = ({
               <StatusIcon status={stitching.status} />
               <div className="min-w-0 flex-1">
                 <p
-                  className={`font-medium ${
+                  className={`font-display ${
                     stitching.status === STITCH_STATUS.PENDING
                       ? "text-muted"
                       : "text-foreground"
@@ -222,22 +258,18 @@ const Loading = ({
                       : stitching.status === STITCH_STATUS.ACTIVE
                         ? "Assembling EPUB and packaging download"
                         : fullBookUnlocked
-                          ? "Runs after all chapters are illustrated"
-                          : "Runs after the first three chapters are illustrated")}
+                          ? sectionArtEnabled
+                            ? "Runs after all section art is placed"
+                            : "Runs after all chapter art is placed"
+                          : sectionArtEnabled
+                            ? "Runs after section art is placed in the first three chapters"
+                            : "Runs after chapter art is placed in the first three chapters")}
                 </p>
               </div>
             </li>
           )}
-        </ol>
-      )}
-
-      {showUnlockForm && (
-        <UnlockFullBook
-          onUnlock={onUnlockFullBook}
-          onPasscodeChange={onClearUnlockError}
-          error={unlockError}
-          disabled={isLoading || isParsing}
-        />
+          </ol>
+        </div>
       )}
 
       {showChapterList && illustrationPrice && (
@@ -261,7 +293,7 @@ const Loading = ({
             aria-hidden
           />
           <div className="min-w-0 space-y-0.5">
-            <p className="text-sm font-medium text-foreground">Complete</p>
+            <p className="font-display-semibold text-sm text-foreground">Complete</p>
             <p className="text-xs text-muted">{message}</p>
           </div>
         </div>

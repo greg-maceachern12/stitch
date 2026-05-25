@@ -18,7 +18,7 @@ function AccessCode({ onAccessGranted }) {
   return (
     <div className="form-card w-full space-y-6">
       <header className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h2 className="text-2xl text-foreground">
           Enter access code
         </h2>
         <p className="text-sm text-muted">

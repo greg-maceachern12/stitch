@@ -19,7 +19,8 @@ module.exports = {
         "hover-surface": "var(--hover-surface)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-open-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        serif: ["var(--font-lovato)", "Georgia", "serif"],
       },
       maxWidth: {
         content: "42rem",

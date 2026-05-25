@@ -48,9 +48,26 @@ export function BookPreviewParsing({ onDismiss, dismissDisabled }) {
 const BookPreview = ({ book, onDismiss, dismissDisabled }) => {
   if (!book) return null;
 
-  const { title, author, cover, chapterCount, language, publisher } = book;
-  const chapterLabel =
-    chapterCount === 1 ? "1 chapter to illustrate" : `${chapterCount} chapters to illustrate`;
+  const {
+    title,
+    author,
+    cover,
+    chapterCount,
+    illustratedChapterCount,
+    fullBookUnlocked,
+    language,
+    publisher,
+  } = book;
+  const illustrateCount = illustratedChapterCount ?? chapterCount;
+  const chapterLabel = fullBookUnlocked
+    ? chapterCount === 1
+      ? "1 chapter to illustrate"
+      : `${chapterCount} chapters to illustrate (full book)`
+    : chapterCount <= illustrateCount
+      ? illustrateCount === 1
+        ? "1 chapter to illustrate"
+        : `${illustrateCount} chapters to illustrate`
+      : `${illustrateCount} of ${chapterCount} chapters to illustrate`;
 
   return (
     <section

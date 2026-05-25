@@ -18,58 +18,45 @@ function About() {
 
         <div className="prose prose-neutral max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
           <p>
-            Welcome to Visuai — a project inspired by the rich visual descriptions found in
-            recent fictional books I&apos;ve been reading, from the likes of the Dune series,
-            the Way of Kings and Eragon.
+            Visuai started while I was deep in a stack of recent fiction — the Dune series,
+            The Way of Kings, Eragon — and noticing how much work the authors put into
+            describing what things actually look like.
           </p>
 
           <p className="text-muted">
-            While reading these books, I found that authors significantly invest in crafting
-            rich visual details for many of their environments, characters, scenes etc. My
-            brain struggled to fully comprehend and visualize this. I often found myself
-            searching Google for fan renditions of the characters to aid my imagination rather
-            than lean on the descriptions provided by the author.
+            The problem was on my end. My brain couldn&apos;t keep up with the level of visual
+            detail packed into the environments, characters, and scenes. I&apos;d end up on
+            Google, hunting for fan renditions of a character to anchor my imagination,
+            instead of leaning on what the author had already written.
+          </p>
+
+          <blockquote>
+            <p>
+              “The autumn leaves blew over the moonlit pavement in such a way as to make the
+              girl who was moving there seem fixed to a sliding walk, letting the motion of
+              the wind and the leaves carry her forward. [...] The trees overhead made a great
+              sound of letting down their dry rain.”
+            </p>
+            <p>― Ray Bradbury, Fahrenheit 451</p>
+          </blockquote>
+
+          <p>
+            So I built Visuai to bring these books to life — to generate lore-accurate images
+            of the characters and environments as you read.
           </p>
 
           <p>
-            See the{" "}
-            <a href="https://landvisuai.netlify.app/" target="_blank" rel="noreferrer">
-              landing page
-            </a>{" "}
-            for examples of such scenes.
-          </p>
-
-          <p>
-            It became apparent that the authors were essentially providing well-written prompts
-            to generate this content, encompassing scenes, characters, environments, and more,
-            for the reader. What was missing was an interface to connect these elements
-            together.
-          </p>
-
-          <p>
-            I would love to ship this as a Kindle/iBooks extension, directly integrated into
-            the reading experience, automatically generating visuals for the user or based on
-            highlighted content. Until Amazon or Apple opens up an extensions marketplace,
-            Visuai will operate as a self-serve platform.
-          </p>
-
-          <p>
-            For now, users can browse chapter by chapter and/or select a specific chapter to
-            explore a visual representation of that portion of the book. In the{" "}
-            <a href="https://pro.visuai.io" target="_blank" rel="noreferrer">
-              pro version
-            </a>
-            , you can upload a whole epub and Visuai will generate visuals for the entire book,
-            adding them to the beginning of each chapter.
+            Ideally this lives inside Kindle or iBooks as an extension, generating visuals
+            automatically or from highlighted passages. Until Amazon or Apple opens up an
+            extensions marketplace, Visuai runs as a self-serve platform.
           </p>
 
           <h2>Planned improvements</h2>
           <ul>
             <li>
-              Migrate to Midjourney for consistent characters in the generation (massively
-              important!) once the API is opened up.
+              Character Glossary: a per-book index of characters, with images and descriptions.
             </li>
-            <li>Utilization of control nets for enhanced image generation</li>
+            <li>ControlNets for better image generation.</li>
           </ul>
 
           <aside className="not-prose my-8 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
@@ -89,15 +76,6 @@ function About() {
           >
             <Github className="h-4 w-4" />
             GitHub
-          </a>
-          <a
-            href="https://landvisuai.netlify.app/"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-ghost"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Landing page
           </a>
         </footer>
       </article>

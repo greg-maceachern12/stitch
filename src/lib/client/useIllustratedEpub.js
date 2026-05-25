@@ -4,13 +4,20 @@ import { useRef, useState } from "react";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { DEFAULT_IMAGE_STYLE } from "@/lib/imageStyles";
 import {
+  MAX_ILLUSTRATED_CHAPTERS,
   STITCH_STATUS,
+  applyFullBookUnlock,
   createReadyProgress,
   createCompleteProgress,
   createErrorProgress,
   createParsingProgress,
   setStitchingProgress,
 } from "@/lib/generationProgress";
+import {
+  isFullBookPasscodeValid,
+  persistFullBookUnlock,
+  readFullBookUnlockFromSession,
+} from "@/lib/fullBookUnlock";
 import { downloadEpubBlob } from "@/lib/client/downloads";
 import { fetchBlobAndConvertToBase64 } from "@/lib/epub/assets";
 import { buildEpub } from "@/lib/epub/buildEpub";
@@ -52,23 +59,28 @@ function formatMetadataValue(value) {
   return String(value);
 }
 
-function bookMetaFrom(metadata, cover, storyChapters) {
+function bookMetaFrom(metadata, cover, storyChapters, fullBookUnlocked = false) {
+  const chapterCount = storyChapters.length;
   return {
     title: metadata.title || "Untitled",
     author: metadata.creator || "Unknown",
     cover: cover || FALLBACK_COVER,
-    chapterCount: storyChapters.length,
+    chapterCount,
+    illustratedChapterCount: fullBookUnlocked
+      ? chapterCount
+      : Math.min(MAX_ILLUSTRATED_CHAPTERS, chapterCount),
+    fullBookUnlocked,
     language: formatMetadataValue(metadata.language),
     publisher: formatMetadataValue(metadata.publisher),
   };
 }
 
-async function loadParsedBook(epubFile) {
+async function loadParsedBook(epubFile, fullBookUnlocked = false) {
   const { epubReader, metadata, toc } = await parseEpubFile(epubFile);
   const cover = await readBookCover(epubReader);
   const allChapters = flattenToc(toc);
   const storyChapters = extractStoryChapters(allChapters);
-  const bookMeta = bookMetaFrom(metadata, cover, storyChapters);
+  const bookMeta = bookMetaFrom(metadata, cover, storyChapters, fullBookUnlocked);
 
   return { epubReader, bookMeta, allChapters, storyChapters };
 }
@@ -86,6 +98,8 @@ export function useIllustratedEpub() {
   };
   const [bookPreview, setBookPreview] = useState(null);
   const [completedDownload, setCompletedDownload] = useState(null);
+  const [fullBookUnlocked, setFullBookUnlocked] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
   const parsedBookRef = useRef(null);
   const parseGenerationRef = useRef(0);
 
@@ -126,15 +140,22 @@ export function useIllustratedEpub() {
     setProgress(createParsingProgress());
 
     try {
-      const parsed = await loadParsedBook(file);
+      const unlocked = readFullBookUnlockFromSession();
+      const parsed = await loadParsedBook(file, unlocked);
       if (parseGeneration !== parseGenerationRef.current) {
         return;
       }
 
       parsedBookRef.current = parsed;
+      setFullBookUnlocked(unlocked);
+      setUnlockError("");
       setBookPreview(parsed.bookMeta);
       setProgress(
-        createReadyProgress(parsed.bookMeta.title, parsed.storyChapters)
+        createReadyProgress(
+          parsed.bookMeta.title,
+          parsed.storyChapters,
+          unlocked
+        )
       );
     } catch (error) {
       if (parseGeneration !== parseGenerationRef.current) {
@@ -153,6 +174,31 @@ export function useIllustratedEpub() {
     } finally {
       setIsParsing(false);
     }
+  }
+
+  function unlockFullBook(passcode) {
+    if (!isFullBookPasscodeValid(passcode)) {
+      setUnlockError("Invalid passcode. Please try again.");
+      return false;
+    }
+
+    persistFullBookUnlock();
+    setFullBookUnlocked(true);
+    setUnlockError("");
+
+    if (bookPreview) {
+      setBookPreview({
+        ...bookPreview,
+        fullBookUnlocked: true,
+        illustratedChapterCount: bookPreview.chapterCount,
+      });
+    }
+
+    if (progress) {
+      setProgress(applyFullBookUnlock(progress));
+    }
+
+    return true;
   }
 
   function dismissBook() {
@@ -267,5 +313,9 @@ export function useIllustratedEpub() {
     setImageModel,
     completedDownload,
     redownload,
+    fullBookUnlocked,
+    unlockError,
+    unlockFullBook,
+    clearUnlockError: () => setUnlockError(""),
   };
 }

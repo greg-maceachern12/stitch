@@ -36,7 +36,7 @@ function ModelDropdown({ imageModel, onImageModelChange, disabled }) {
           >
             {IMAGE_MODEL_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label} ({option.costLabel})
+                {option.label}
               </option>
             ))}
           </select>

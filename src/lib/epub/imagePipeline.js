@@ -1,5 +1,6 @@
 import {
   CHAPTER_STATUS,
+  MAX_ILLUSTRATED_CHAPTERS,
   createChapterProgress,
   setChapterStatus,
   setPreparing,
@@ -104,10 +105,14 @@ export async function runImagePipeline({
   }
 
   const storyRendered = rendered.filter((chapter) => chapter.isStory);
+  const fullBookUnlocked = Boolean(initialProgress?.fullBookUnlocked);
+  const chaptersToIllustrate = fullBookUnlocked
+    ? storyRendered
+    : storyRendered.slice(0, MAX_ILLUSTRATED_CHAPTERS);
   progress = setPreparing(progress, false);
   onProgress?.(progress);
 
-  await mapWithConcurrency(storyRendered, concurrency, async (chapter) => {
+  await mapWithConcurrency(chaptersToIllustrate, concurrency, async (chapter) => {
     const chapterId = storyIdByHref.get(chapter.id) ?? chapter.id;
 
     const reportGenerating = (step) => {

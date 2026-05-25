@@ -5,15 +5,19 @@ import {
   AlertCircle,
   Circle,
   Loader2,
+  Lock,
   MinusCircle,
   Sparkles,
 } from "lucide-react";
 import { formatIllustrationPrice } from "@/lib/imageModelPricing";
+import UnlockFullBook from "@/components/UnlockFullBook";
 import {
   CHAPTER_STATUS,
   STITCH_STATUS,
   PHASES,
   chapterStatusLabel,
+  getIllustrationChapterCount,
+  hasLockedChapters,
   isTerminalPhase,
   shouldShowProgressPanel,
 } from "@/lib/generationProgress";
@@ -38,6 +42,10 @@ function StatusIcon({ status }) {
     return (
       <MinusCircle className="h-4 w-4 shrink-0 text-muted" aria-hidden />
     );
+  }
+
+  if (status === CHAPTER_STATUS.LOCKED) {
+    return <Lock className="h-4 w-4 shrink-0 text-muted" aria-hidden />;
   }
 
   if (
@@ -74,7 +82,15 @@ function IllustrationCost({ price }) {
   );
 }
 
-const Loading = ({ isLoading, isParsing, progress, imageModel }) => {
+const Loading = ({
+  isLoading,
+  isParsing,
+  progress,
+  imageModel,
+  onUnlockFullBook,
+  onClearUnlockError,
+  unlockError,
+}) => {
   if (!shouldShowProgressPanel(progress, isLoading || isParsing)) return null;
 
   const {
@@ -85,15 +101,24 @@ const Loading = ({ isLoading, isParsing, progress, imageModel }) => {
     chapters = [],
     stitching,
     isPreparing,
+    fullBookUnlocked,
   } = progress;
   const isError = phase === PHASES.ERROR;
   const isComplete = phase === PHASES.COMPLETE;
   const isReady = phase === PHASES.READY;
   const showChapterList = chapters.length > 0 && !isError;
   const showPercentBar = !isError && !isReady && phase !== PHASES.PARSING;
+  const showUnlockForm =
+    isReady &&
+    hasLockedChapters(chapters) &&
+    !fullBookUnlocked &&
+    typeof onUnlockFullBook === "function";
   const illustrationPrice =
     showChapterList && imageModel
-      ? formatIllustrationPrice(imageModel, chapters.length)
+      ? formatIllustrationPrice(
+          imageModel,
+          getIllustrationChapterCount(chapters.length, fullBookUnlocked)
+        )
       : null;
 
   return (
@@ -155,7 +180,8 @@ const Loading = ({ isLoading, isParsing, progress, imageModel }) => {
                 <div className="min-w-0 flex-1">
                   <p
                     className={`truncate font-medium ${
-                      chapter.status === CHAPTER_STATUS.PENDING
+                      chapter.status === CHAPTER_STATUS.PENDING ||
+                      chapter.status === CHAPTER_STATUS.LOCKED
                         ? "text-muted"
                         : "text-foreground"
                     }`}
@@ -195,12 +221,23 @@ const Loading = ({ isLoading, isParsing, progress, imageModel }) => {
                       ? "EPUB assembled and download started"
                       : stitching.status === STITCH_STATUS.ACTIVE
                         ? "Assembling EPUB and packaging download"
-                        : "Runs after all chapters are illustrated")}
+                        : fullBookUnlocked
+                          ? "Runs after all chapters are illustrated"
+                          : "Runs after the first three chapters are illustrated")}
                 </p>
               </div>
             </li>
           )}
         </ol>
+      )}
+
+      {showUnlockForm && (
+        <UnlockFullBook
+          onUnlock={onUnlockFullBook}
+          onPasscodeChange={onClearUnlockError}
+          error={unlockError}
+          disabled={isLoading || isParsing}
+        />
       )}
 
       {showChapterList && illustrationPrice && (
@@ -218,12 +255,15 @@ const Loading = ({ isLoading, isParsing, progress, imageModel }) => {
       )}
 
       {isComplete && !showChapterList && (
-        <div className="flex items-center gap-3 text-foreground">
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-emerald-600/5 px-3.5 py-3">
           <CheckCircle2
-            className="h-5 w-5 shrink-0 text-emerald-600"
+            className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
             aria-hidden
           />
-          <p className="text-sm font-medium">{message}</p>
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-sm font-medium text-foreground">Complete</p>
+            <p className="text-xs text-muted">{message}</p>
+          </div>
         </div>
       )}
 

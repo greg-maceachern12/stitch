@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowRight } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import FileUpload from "@/components/FileUpload";
 import Loading from "@/components/Loading";
 import CompleteCard from "@/components/CompleteCard";
 import AccessCode from "@/components/AccessCode";
 import { useIllustratedEpub } from "@/lib/client/useIllustratedEpub";
-import { canStartVisualization, PHASES } from "@/lib/generationProgress";
+import {
+  canStartVisualization,
+  CHAPTER_STATUS,
+  PHASES,
+} from "@/lib/generationProgress";
 
 export default function AppShell() {
   const [isAccessGranted, setIsAccessGranted] = useState(true);
@@ -15,16 +20,33 @@ export default function AppShell() {
 
   const handleAccessGranted = () => setIsAccessGranted(true);
   const isComplete = epubWorkflow.progress?.phase === PHASES.COMPLETE;
+  const illustratedCount = isComplete
+    ? epubWorkflow.progress?.chapters?.filter(
+        (chapter) => chapter.status === CHAPTER_STATUS.DONE
+      ).length
+    : null;
 
   return (
     <SiteChrome variant="form">
       <header className="mb-10 w-full space-y-3 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+        <h1 className="flex flex-col items-center gap-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+          <span
+            className="flex items-center justify-center gap-3 text-4xl md:gap-4 md:text-5xl"
+            aria-hidden="true"
+          >
+            <span>📖</span>
+            <ArrowRight
+              className="h-7 w-7 shrink-0 text-muted md:h-8 md:w-8"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <span>🌄</span>
+          </span>
           Turn words into worlds
         </h1>
         <p className="mx-auto max-w-md text-base text-muted">
-          Upload an EPUB and Visuai will add AI illustrations to each chapter — free for a
-          limited time.
+          Upload an EPUB and Visuai will add AI illustrations to the first three chapters —
+          free for a limited time.
         </p>
       </header>
 
@@ -32,6 +54,7 @@ export default function AppShell() {
         {isComplete ? (
           <CompleteCard
             bookTitle={epubWorkflow.completedDownload?.title}
+            illustratedCount={illustratedCount}
             onRedownload={epubWorkflow.redownload}
           />
         ) : isAccessGranted ? (
@@ -63,6 +86,9 @@ export default function AppShell() {
             isParsing={epubWorkflow.isParsing}
             progress={epubWorkflow.progress}
             imageModel={epubWorkflow.imageModel}
+            onUnlockFullBook={epubWorkflow.unlockFullBook}
+            onClearUnlockError={epubWorkflow.clearUnlockError}
+            unlockError={epubWorkflow.unlockError}
           />
         )}
       </div>

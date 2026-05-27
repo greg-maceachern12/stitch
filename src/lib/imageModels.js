@@ -3,12 +3,6 @@ import { formatPerImageCost, getImageCostUsd } from "@/lib/imageModelPricing";
 /** Default OpenRouter image model (Grok). */
 export const DEFAULT_IMAGE_MODEL = "x-ai/grok-imagine-image-quality";
 
-/** Smallest resolution for most OpenRouter image models. */
-export const DEFAULT_IMAGE_SIZE = "1K";
-
-/** Models that support OpenRouter's 0.5K tier (lowest available). */
-const HALF_K_MODELS = new Set(["google/gemini-3.1-flash-image-preview"]);
-
 /** @type {Record<string, { label: string; logoUrl: string }>} */
 export const IMAGE_MODELS = {
   "x-ai/grok-imagine-image-quality": {
@@ -23,11 +17,11 @@ export const IMAGE_MODELS = {
     label: "Flux 2 Klein",
     logoUrl: "/model-logos/flux.png",
   },
-  "google/gemini-2.5-flash-image": {
+  "google/gemini-3.1-flash-image-preview": {
     label: "Nano Banana",
     logoUrl: "/model-logos/google.png",
   },
-  "openai/gpt-5-image-mini": {
+  "openai/gpt-5.4-image-2": {
     label: "ChatGPT Image",
     logoUrl: "/model-logos/openai.png",
   },
@@ -55,11 +49,4 @@ export function getImageModel(modelId) {
 /** Resolve a user-selected model id; invalid/missing values fall back to Grok. */
 export function resolveImageModel(requestedModel) {
   return getImageModel(requestedModel).id;
-}
-
-export function getImageSizeForModel(modelId) {
-  if (HALF_K_MODELS.has(modelId)) {
-    return "0.5K";
-  }
-  return DEFAULT_IMAGE_SIZE;
 }

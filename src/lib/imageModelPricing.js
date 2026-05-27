@@ -1,12 +1,31 @@
 /**
  * Approximate OpenRouter cost per generated chapter image at default settings
- * (16:9, smallest size tier for each model). Sources: openrouter.ai model pages,
- * Google Gemini image token docs (1290 output tokens ≈ $0.039).
+ * (16:9, provider default resolution). Sources: openrouter.ai model pages.
  *
- * @typedef {"per_image" | "per_megapixel" | "per_output_tokens"} PricingKind
+ * @typedef {"per_image" | "per_megapixel" | "per_tokens"} PricingKind
  */
 
-/** @type {Record<string, { kind: PricingKind, usd: number, note?: string }>} */
+/** @param {number} tokens @param {number} usdPerMillion */
+function tokensToUsd(tokens, usdPerMillion) {
+  return (tokens / 1_000_000) * usdPerMillion;
+}
+
+/**
+ * @param {{ inputTokens?: number, outputTokens?: number, imageOutputTokens?: number }} counts
+ * @param {{ inputUsdPerM?: number, outputUsdPerM?: number, imageOutputUsdPerM?: number }} rates
+ */
+function computeTokenCostUsd(counts, rates) {
+  const inputTokens = counts.inputTokens ?? 0;
+  const outputTokens = counts.outputTokens ?? 0;
+  const imageOutputTokens = counts.imageOutputTokens ?? 0;
+  return (
+    tokensToUsd(inputTokens, rates.inputUsdPerM ?? 0) +
+    tokensToUsd(outputTokens, rates.outputUsdPerM ?? 0) +
+    tokensToUsd(imageOutputTokens, rates.imageOutputUsdPerM ?? 0)
+  );
+}
+
+/** @type {Record<string, { kind: PricingKind, usd?: number, note?: string } & Record<string, unknown>>} */
 export const IMAGE_MODEL_COST_USD = {
   "x-ai/grok-imagine-image-quality": {
     kind: "per_image",
@@ -23,15 +42,21 @@ export const IMAGE_MODEL_COST_USD = {
     usd: 0.014,
     note: "OpenRouter: $0.014 for the first output megapixel at 1K",
   },
-  "google/gemini-2.5-flash-image": {
-    kind: "per_output_tokens",
-    usd: 0.039,
-    note: "≈1290 image output tokens at $2.50/M",
+  "google/gemini-3.1-flash-image-preview": {
+    kind: "per_tokens",
+    inputUsdPerM: 0.5,
+    imageOutputUsdPerM: 60,
+    estimatedInputTokens: 1620,
+    estimatedImageOutputTokens: 1056,
+    note: "Default 1K (~1056 @ $60/M image out) + prompt/ref @ $0.50/M in",
   },
-  "openai/gpt-5-image-mini": {
-    kind: "per_image",
-    usd: 0.011,
-    note: "≈GPT Image 1 Mini medium 1K; token pricing varies",
+  "openai/gpt-5.4-image-2": {
+    kind: "per_tokens",
+    inputUsdPerM: 8,
+    imageOutputUsdPerM: 30,
+    estimatedInputTokens: 1500,
+    estimatedImageOutputTokens: 1056,
+    note: "1K medium (~1056 @ $30/M image out) + prompt/ref @ $8/M in",
   },
 };
 
@@ -46,6 +71,20 @@ export function getImageCostUsd(modelId) {
   if (entry.kind === "per_megapixel") {
     const mp = FLUX_1K_16_9_MEGAPIXELS;
     return entry.usd * Math.max(1, Math.ceil(mp));
+  }
+  if (entry.kind === "per_tokens") {
+    return computeTokenCostUsd(
+      {
+        inputTokens: entry.estimatedInputTokens,
+        outputTokens: entry.estimatedOutputTokens,
+        imageOutputTokens: entry.estimatedImageOutputTokens,
+      },
+      {
+        inputUsdPerM: entry.inputUsdPerM,
+        outputUsdPerM: entry.outputUsdPerM,
+        imageOutputUsdPerM: entry.imageOutputUsdPerM,
+      }
+    );
   }
   return entry.usd;
 }

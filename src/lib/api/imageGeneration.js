@@ -1,4 +1,3 @@
-import { getImageSizeForModel } from "@/lib/imageModels";
 import { getImageStyle } from "@/lib/imageStyles";
 import { resolveStyleReferenceForApi } from "@/lib/server/styleReference";
 import { ApiError } from "./errors";
@@ -133,7 +132,6 @@ async function sendImageRequest({
       ],
       imageConfig: {
         aspect_ratio: "16:9",
-        image_size: getImageSizeForModel(model),
       },
     },
   });

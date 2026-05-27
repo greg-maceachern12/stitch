@@ -196,8 +196,10 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     let retriedEmptyResponse = false;
     let response;
 
+    const requestWithAspect = { ...baseRequest, aspectRatio };
+
     try {
-      response = await sendImageRequest(baseRequest);
+      response = await sendImageRequest(requestWithAspect);
     } catch (error) {
       if (!hasReferenceImage || !isProviderError(error)) {
         throw error;
@@ -213,7 +215,7 @@ export async function generateImage(prompt, imageStyle, imageModel) {
         }
       );
       response = await sendImageRequest({
-        ...baseRequest,
+        ...requestWithAspect,
         includeReferenceImage: false,
         referenceDataUrl: null,
       });
@@ -221,8 +223,12 @@ export async function generateImage(prompt, imageStyle, imageModel) {
 
     let { urls, message } = urlsFromResponse(response);
     const activeRequest = retriedWithoutReference
-      ? { ...baseRequest, includeReferenceImage: false, referenceDataUrl: null }
-      : baseRequest;
+      ? {
+          ...requestWithAspect,
+          includeReferenceImage: false,
+          referenceDataUrl: null,
+        }
+      : requestWithAspect;
 
     if (urls.length === 0) {
       console.warn(

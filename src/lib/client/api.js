@@ -82,3 +82,8 @@ export async function selectIllustrationSections({
 
   return Array.isArray(data.sections) ? data.sections : [];
 }
+
+export async function generateStoryAtlasPlan(payload) {
+  const data = await postJson(GENERATE_STORY_ATLAS_PLAN_API, payload);
+  return data.plan ?? null;
+}

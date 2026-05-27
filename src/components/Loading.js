@@ -137,6 +137,10 @@ const Loading = ({
   const isComplete = phase === PHASES.COMPLETE;
   const isReady = phase === PHASES.READY;
   const showChapterList = chapters.length > 0 && !isError;
+  const showAtlasList =
+    atlas?.enabled &&
+    atlas.characters?.length > 0 &&
+    (phase === PHASES.ATLAS || atlas.status === ATLAS_STATUS.PORTRAITS);
   const showChapterLimitBanner =
     showChapterList && hasLockedChapters(chapters);
   const showPercentBar = !isError && !isReady && phase !== PHASES.PARSING;

@@ -29,7 +29,8 @@ const PRO_FEATURES = [
     id: "story-atlas",
     icon: BookMarked,
     title: "Story Atlas",
-    description: "Character portraits and location art before chapter one.",
+    description:
+      "Spoiler-free recap, character portraits, and key places before chapter one.",
   },
   {
     id: "in-chapter",

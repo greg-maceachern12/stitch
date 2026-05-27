@@ -336,6 +336,8 @@ export default function OptionsPill({
   onClearProUnlockError,
   fullBookUnlocked = false,
   onFullBookChange,
+  storyAtlasEnabled = false,
+  onStoryAtlasChange,
   disabled = false,
 }) {
   const detailsRef = useRef(null);
@@ -434,6 +436,13 @@ export default function OptionsPill({
               hint="Illustrate every chapter, not only the first three"
               checked={fullBookUnlocked}
               onChange={() => onFullBookChange?.(!fullBookUnlocked)}
+              disabled={togglesDisabled}
+            />
+            <ToggleRow
+              title="Story Atlas"
+              hint="Spoiler-free recap, characters, and places before chapter one"
+              checked={storyAtlasEnabled}
+              onChange={() => onStoryAtlasChange?.(!storyAtlasEnabled)}
               disabled={togglesDisabled}
             />
           </div>

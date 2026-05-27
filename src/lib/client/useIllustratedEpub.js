@@ -33,6 +33,10 @@ import {
 } from "@/lib/epub/chapters";
 import { logGenerationStart } from "@/lib/client/generationLog";
 import { runImagePipeline } from "@/lib/epub/imagePipeline";
+import { extractBookIdentity } from "@/lib/storyAtlas/metadata";
+import { shouldGenerateStoryAtlas } from "@/lib/storyAtlas/enabled";
+import { prepareStoryAtlasForEpub } from "@/lib/storyAtlas/prepareStoryAtlas";
+import { runStoryAtlasPipeline } from "@/lib/storyAtlas/atlasPipeline";
 
 const FALLBACK_COVER = "https://i.imgur.com/c4VGri2.jpeg";
 const PIPELINE_CONCURRENCY = 4;
@@ -82,13 +86,15 @@ function bookMetaFrom(metadata, cover, storyChapters, fullBookUnlocked = false) 
 }
 
 async function loadParsedBook(epubFile, fullBookUnlocked = false) {
-  const { epubReader, metadata, toc } = await parseEpubFile(epubFile);
+  const { epubReader, metadata, packageMetadata, toc } =
+    await parseEpubFile(epubFile);
   const cover = await readBookCover(epubReader);
   const allChapters = flattenToc(toc);
   const storyChapters = extractStoryChapters(allChapters);
   const bookMeta = bookMetaFrom(metadata, cover, storyChapters, fullBookUnlocked);
+  const bookIdentity = extractBookIdentity(metadata, packageMetadata);
 
-  return { epubReader, bookMeta, allChapters, storyChapters };
+  return { epubReader, bookMeta, bookIdentity, allChapters, storyChapters };
 }
 
 export function useIllustratedEpub() {
@@ -110,6 +116,7 @@ export function useIllustratedEpub() {
   const [proUnlocked, setProUnlocked] = useState(false);
   const [proUnlockError, setProUnlockError] = useState("");
   const [fullBookUnlocked, setFullBookUnlocked] = useState(false);
+  const [storyAtlasEnabled, setStoryAtlasEnabled] = useState(false);
   const setIllustrationMode = (mode) => {
     const resolved = getIllustrationMode(mode);
     if (resolved === ILLUSTRATION_MODES.SECTION_ART && !proUnlocked) {
@@ -178,7 +185,8 @@ export function useIllustratedEpub() {
           parsed.bookMeta.title,
           parsed.storyChapters,
           fullBookUnlocked,
-          false
+          false,
+          storyAtlasEnabled && proUnlocked
         )
       );
     } catch (error) {
@@ -236,6 +244,23 @@ export function useIllustratedEpub() {
     }
   }
 
+  function setStoryAtlasEnabledState(enabled) {
+    if (!proUnlocked) return;
+    setStoryAtlasEnabled(enabled);
+
+    if (progress?.phase === PHASES.READY && parsedBookRef.current?.storyChapters) {
+      setProgress((current) =>
+        createReadyProgress(
+          bookPreview?.title ?? current.bookTitle,
+          parsedBookRef.current.storyChapters,
+          current.fullBookUnlocked,
+          current.sectionArtEnabled,
+          enabled
+        )
+      );
+    }
+  }
+
   function dismissBook() {
     if (isLoading) {
       return;
@@ -248,6 +273,7 @@ export function useIllustratedEpub() {
     setProUnlocked(false);
     setProUnlockError("");
     setFullBookUnlocked(false);
+    setStoryAtlasEnabled(false);
     setIllustrationModeState(DEFAULT_ILLUSTRATION_MODE);
     clearParsedBook();
   }
@@ -284,6 +310,10 @@ export function useIllustratedEpub() {
 
       const effectiveFullBook = proUnlocked && fullBookUnlocked;
       const useSectionArt = shouldUseSectionArt(proUnlocked, illustrationMode);
+      const generateAtlas = shouldGenerateStoryAtlas(
+        proUnlocked,
+        storyAtlasEnabled
+      );
 
       logGenerationStart({
         bookMeta,
@@ -294,8 +324,37 @@ export function useIllustratedEpub() {
         useSectionArt,
         proUnlocked,
         fullBookUnlocked: effectiveFullBook,
+        storyAtlasEnabled: generateAtlas,
         concurrency: PIPELINE_CONCURRENCY,
       });
+
+      let storyAtlas = null;
+      if (generateAtlas) {
+        const atlasResult = await runStoryAtlasPipeline({
+          bookIdentity: parsed.bookIdentity,
+          imageStyle,
+          imageModel: selectedImageModel,
+          initialProgress: {
+            ...(currentProgress ?? {}),
+            bookTitle: bookMeta.title,
+            fullBookUnlocked: effectiveFullBook,
+            sectionArtEnabled: useSectionArt,
+            storyAtlasEnabled: true,
+          },
+          onProgress: (update) => {
+            currentProgress = update;
+            setProgress(update);
+          },
+        });
+
+        if (atlasResult?.plan) {
+          storyAtlas = prepareStoryAtlasForEpub(
+            atlasResult.plan,
+            atlasResult.portraits,
+            bookMeta.title
+          );
+        }
+      }
 
       const chapters = await runImagePipeline({
         allChapters,
@@ -328,6 +387,7 @@ export function useIllustratedEpub() {
         title: bookMeta.title,
         author: bookMeta.author,
         cover: bookMeta.cover,
+        storyAtlas,
         chapters,
       });
 
@@ -387,5 +447,7 @@ export function useIllustratedEpub() {
     clearProUnlockError: () => setProUnlockError(""),
     fullBookUnlocked,
     setFullBookEnabled,
+    storyAtlasEnabled,
+    setStoryAtlasEnabled: setStoryAtlasEnabledState,
   };
 }

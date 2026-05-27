@@ -22,8 +22,14 @@ export function parseEpubFile(file) {
       try {
         const epubReader = epub(event.target.result);
         const metadata = await epubReader.loaded.metadata;
+        const packageDocument = await epubReader.loaded.package;
         const nav = await epubReader.loaded.navigation;
-        resolve({ epubReader, metadata, toc: nav.toc });
+        resolve({
+          epubReader,
+          metadata,
+          packageMetadata: packageDocument?.metadata ?? null,
+          toc: nav.toc,
+        });
       } catch (error) {
         reject(error);
       }

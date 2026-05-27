@@ -27,6 +27,8 @@ const FileUpload = ({
   onClearProUnlockError,
   fullBookUnlocked,
   onFullBookChange,
+  storyAtlasEnabled,
+  onStoryAtlasChange,
   bookPreview,
   onDismissBook,
 }) => {

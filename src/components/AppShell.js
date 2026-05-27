@@ -89,6 +89,8 @@ export default function AppShell() {
             onClearProUnlockError={epubWorkflow.clearProUnlockError}
             fullBookUnlocked={epubWorkflow.fullBookUnlocked}
             onFullBookChange={epubWorkflow.setFullBookEnabled}
+            storyAtlasEnabled={epubWorkflow.storyAtlasEnabled}
+            onStoryAtlasChange={epubWorkflow.setStoryAtlasEnabled}
             bookPreview={epubWorkflow.bookPreview}
           />
         ) : (

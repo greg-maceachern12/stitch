@@ -12,6 +12,8 @@ import {
 import { formatIllustrationPrice } from "@/lib/imageModelPricing";
 import { isSectionArtMode } from "@/lib/illustrationModes";
 import {
+  ATLAS_CHARACTER_STATUS,
+  ATLAS_STATUS,
   CHAPTER_STATUS,
   STITCH_STATUS,
   PHASES,

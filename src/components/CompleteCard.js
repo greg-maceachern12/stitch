@@ -12,7 +12,7 @@ export default function CompleteCard({
 }) {
   const chapterSummary =
     illustratedCount != null && illustratedCount > 0
-      ? `Section art added to ${illustratedCount} chapter${illustratedCount === 1 ? "" : "s"}`
+      ? `${illustratedCount} chapter${illustratedCount === 1 ? "" : "s"} illustrated`
       : null;
 
   return (
@@ -26,13 +26,13 @@ export default function CompleteCard({
         </div>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-xs font-medium uppercase tracking-wider text-emerald-700">
-            Illustration complete
+            Ready to read
           </p>
           <h2 className="text-lg leading-snug text-foreground">
-            We drew all over your book.
+            Your book, brought to life.
           </h2>
           <p className="text-sm leading-relaxed text-muted">
-            Mostly inside the margins. Your illustrated EPUB is ready.
+            Your illustrated EPUB just landed in your downloads.
           </p>
         </div>
       </div>
@@ -71,26 +71,27 @@ export default function CompleteCard({
           aria-hidden
         />
         <p className="text-sm leading-relaxed text-muted">
-          Your download should have started automatically. Check your browser
-          or downloads folder for the illustrated EPUB.
+          Open it in Apple Books, Kindle, or any EPUB reader. If the download
+          didn&apos;t start on its own, check your browser bar or downloads
+          folder.
         </p>
       </div>
 
       {showProUpsell && onOpenPro && (
         <p className="mt-5 text-sm leading-relaxed text-muted">
-          Want more?{" "}
+          This was a taste.{" "}
           <button
             type="button"
             onClick={onOpenPro}
             className="font-medium text-[var(--pro-blue)] underline-offset-2 transition-colors hover:text-[var(--pro-navy)] hover:underline"
           >
-            Unlock the entire book and more with Pro
+            Illustrate the whole book with Pro
           </button>
         </p>
       )}
 
       <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted">Didn&apos;t get a file?</p>
+        <p className="text-xs text-muted">Nothing showed up?</p>
         <button
           type="button"
           onClick={onRedownload}

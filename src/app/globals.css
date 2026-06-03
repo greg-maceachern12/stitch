@@ -258,9 +258,9 @@
   .visuai-pro-modal-scrim--hero {
     background: linear-gradient(
       165deg,
-      rgba(6, 17, 92, 0.55) 0%,
-      rgba(6, 17, 92, 0.22) 42%,
-      transparent 72%
+      rgba(6, 17, 92, 0.68) 0%,
+      rgba(6, 17, 92, 0.38) 42%,
+      rgba(6, 17, 92, 0.15) 72%
     );
   }
 

@@ -27,6 +27,8 @@ const FileUpload = ({
   onClearProUnlockError,
   fullBookUnlocked,
   onFullBookChange,
+  storyAtlasEnabled,
+  onStoryAtlasChange,
   bookPreview,
   onDismissBook,
 }) => {
@@ -49,8 +51,8 @@ const FileUpload = ({
 
   const canDismiss = !isLoading;
 
-  return (
-    <div className="form-card w-full space-y-6">
+  const cardContent = (
+    <>
       <div className="space-y-2">
         <div className="relative flex items-center justify-between gap-3 overflow-visible">
           <span className="font-display-semibold text-sm text-foreground">
@@ -69,6 +71,8 @@ const FileUpload = ({
             onClearProUnlockError={onClearProUnlockError}
             fullBookUnlocked={fullBookUnlocked}
             onFullBookChange={onFullBookChange}
+            storyAtlasEnabled={storyAtlasEnabled}
+            onStoryAtlasChange={onStoryAtlasChange}
             disabled={isLoading || isParsing}
           />
         </div>
@@ -154,8 +158,20 @@ const FileUpload = ({
           </span>
         </button>
       </div>
-    </div>
+    </>
   );
+
+  if (proUnlocked) {
+    return (
+      <div className="pro-gradient-ring pro-gradient-ring--animate-in w-full overflow-visible rounded-md">
+        <div className="pro-gradient-ring-inner space-y-6 overflow-visible bg-surface p-6 shadow-card">
+          {cardContent}
+        </div>
+      </div>
+    );
+  }
+
+  return <div className="form-card w-full space-y-6">{cardContent}</div>;
 };
 
 export default FileUpload;

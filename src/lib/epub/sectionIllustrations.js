@@ -2,9 +2,10 @@ import { escapeXml } from "./xhtml";
 
 const MIN_PARAGRAPH_CHARS = 120;
 const MIN_HEADING_CHARS = 8;
-const EXCERPT_CHARS = 900;
-const MAX_SELECTION_CANDIDATES = 24;
-const MAX_ILLUSTRATIONS_PER_CHAPTER = 3;
+const EXCERPT_CHARS = 1200;
+const MAX_SELECTION_CANDIDATES = 48;
+export const WORDS_PER_ILLUSTRATION = 900;
+export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
 
 const CANDIDATE_SELECTOR = "h2, h3, h4, h5, h6, p";
 const SKIP_TEXT_PATTERNS = [
@@ -19,6 +20,12 @@ const SKIP_TEXT_PATTERNS = [
 
 function normalizeWhitespace(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function countWords(value) {
+  const text = normalizeWhitespace(value);
+  if (!text) return 0;
+  return text.split(/\s+/).length;
 }
 
 function compactExcerpt(value, max = EXCERPT_CHARS) {
@@ -85,12 +92,12 @@ function candidateScore(candidate) {
   return candidate.excerpt.length + sensoryWords * 80 - quotedText * 12;
 }
 
-export function getTargetIllustrationCount(candidateCount) {
-  const total = Math.max(0, Number(candidateCount) || 0);
-  if (total <= 0) return 0;
-  if (total < 8) return 1;
-  if (total < 18) return 2;
-  return MAX_ILLUSTRATIONS_PER_CHAPTER;
+export function getTargetIllustrationCount(wordCount, candidateCount = Infinity) {
+  const words = Math.max(0, Number(wordCount) || 0);
+  const candidates = Math.max(0, Number(candidateCount) || 0);
+  if (candidates <= 0) return 0;
+  const byLength = Math.max(1, Math.round(words / WORDS_PER_ILLUSTRATION));
+  return Math.min(byLength, candidates, MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER);
 }
 
 export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
@@ -120,7 +127,12 @@ export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
     });
   });
 
-  const rankedCandidates = [...candidates]
+  const wordCount = candidates.reduce(
+    (total, candidate) => total + countWords(candidate.text),
+    0
+  );
+
+  const selectionCandidates = [...candidates]
     .sort((a, b) => candidateScore(b) - candidateScore(a))
     .slice(0, MAX_SELECTION_CANDIDATES)
     .sort((a, b) => a.index - b.index);
@@ -128,8 +140,8 @@ export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
   return {
     html: template.innerHTML,
     candidates,
-    selectionCandidates: rankedCandidates,
-    targetCount: getTargetIllustrationCount(candidates.length),
+    selectionCandidates,
+    targetCount: getTargetIllustrationCount(wordCount, candidates.length),
   };
 }
 
@@ -142,7 +154,6 @@ export function buildFallbackSectionSelections({
 }) {
   const count = Math.min(
     Math.max(0, Number(targetCount) || 0),
-    MAX_ILLUSTRATIONS_PER_CHAPTER,
     candidates.length
   );
 
@@ -167,7 +178,7 @@ export function normalizeSectionSelections(selections, candidates, targetCount) 
   const seenAnchors = new Set();
   const count = Math.min(
     Math.max(0, Number(targetCount) || 0),
-    MAX_ILLUSTRATIONS_PER_CHAPTER
+    candidates.length
   );
 
   if (!Array.isArray(selections) || count === 0) return [];

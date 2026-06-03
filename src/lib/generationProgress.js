@@ -1,5 +1,6 @@
 export const MAX_ILLUSTRATED_CHAPTERS = 3;
-export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 3;
+/** Per-chapter cap used for conservative UI price estimates. */
+export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
 
 export const CHAPTER_STATUS = {
   PENDING: "pending",
@@ -21,10 +22,26 @@ export const STITCH_STATUS = {
 export const PHASES = {
   PARSING: "parsing",
   READY: "ready",
+  ATLAS: "atlas",
   PREPARING: "preparing",
   ILLUSTRATING: "illustrating",
   STITCHING: "stitching",
   COMPLETE: "complete",
+  ERROR: "error",
+};
+export const ATLAS_STATUS = {
+  PENDING: "pending",
+  PLANNING: "planning",
+  PORTRAITS: "portraits",
+  DONE: "done",
+  SKIPPED: "skipped",
+  ERROR: "error",
+};
+
+export const ATLAS_CHARACTER_STATUS = {
+  PENDING: "pending",
+  IMAGE: "image",
+  DONE: "done",
   ERROR: "error",
 };
 
@@ -185,7 +202,8 @@ export function createReadyProgress(
   bookTitle,
   storyChapters,
   fullBookUnlocked = false,
-  sectionArtEnabled = false
+  sectionArtEnabled = false,
+  storyAtlasEnabled = false
 ) {
   const chapters = buildChapterEntries(storyChapters, fullBookUnlocked);
 
@@ -194,11 +212,80 @@ export function createReadyProgress(
     bookTitle,
     fullBookUnlocked,
     sectionArtEnabled,
+    storyAtlasEnabled,
     isPreparing: false,
     chapters,
+    atlas: storyAtlasEnabled
+      ? { enabled: true, status: ATLAS_STATUS.PENDING, characters: [] }
+      : { enabled: false },
     stitching: { status: STITCH_STATUS.PENDING, label: STITCH_LABEL },
     message: readyMessage(storyChapters, fullBookUnlocked, sectionArtEnabled),
     percent: 0,
+  };
+}
+
+export function createAtlasCharacterEntries(characters = []) {
+  return characters.map((character) => ({
+    id: character.id,
+    name: character.name,
+    status: ATLAS_CHARACTER_STATUS.PENDING,
+  }));
+}
+
+export function setAtlasPlanning(progress, message) {
+  return {
+    ...progress,
+    phase: PHASES.ATLAS,
+    storyAtlasEnabled: true,
+    atlas: {
+      enabled: true,
+      status: ATLAS_STATUS.PLANNING,
+      characters: progress.atlas?.characters ?? [],
+    },
+    message: message ?? "Planning Story Atlas…",
+    percent: Math.max(progress.percent ?? 0, 2),
+  };
+}
+
+export function setAtlasPortraits(progress, characters, message) {
+  return {
+    ...progress,
+    phase: PHASES.ATLAS,
+    atlas: {
+      enabled: true,
+      status: ATLAS_STATUS.PORTRAITS,
+      characters,
+    },
+    message: message ?? "Rendering Story Atlas portraits…",
+    percent: Math.max(progress.percent ?? 0, 8),
+  };
+}
+
+export function setAtlasCharacterStatus(progress, characterId, status) {
+  const characters = (progress.atlas?.characters ?? []).map((entry) =>
+    entry.id === characterId ? { ...entry, status } : entry
+  );
+
+  return {
+    ...progress,
+    atlas: {
+      ...progress.atlas,
+      enabled: true,
+      characters,
+    },
+  };
+}
+
+export function setAtlasSkipped(progress, message) {
+  return {
+    ...progress,
+    storyAtlasEnabled: false,
+    atlas: {
+      enabled: true,
+      status: ATLAS_STATUS.SKIPPED,
+      characters: progress.atlas?.characters ?? [],
+    },
+    message: message ?? "Story Atlas skipped",
   };
 }
 

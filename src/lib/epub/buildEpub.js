@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { atlasPortraitPath } from "@/lib/storyAtlas/atlasPaths";
 import { fetchImageAsArrayBuffer } from "./assets";
 import { buildChapterXhtml, escapeXml } from "./xhtml";
 import { insertIllustrationsIntoHtml } from "./sectionIllustrations";
@@ -62,6 +63,132 @@ const EPUB_STYLES = `body {
 
 .chapter-prose {
   margin-top: 0;
+}
+.story-atlas {
+  margin: 0;
+  padding: 0 0.25em;
+}
+
+.atlas-header {
+  text-align: center;
+  margin: 0 0 2.25em;
+  padding: 1.5em 0.75em 1.25em;
+  border-bottom: 2px solid #1e3a5f;
+}
+
+.atlas-brand {
+  font-size: 0.75em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0e7490;
+  margin: 0 0 0.75em;
+}
+
+.atlas-title {
+  font-size: 1.65em;
+  line-height: 1.25;
+  margin: 0 0 0.35em;
+  color: #1e3a5f;
+}
+
+.atlas-tagline {
+  font-size: 0.9em;
+  font-style: italic;
+  color: #555555;
+  margin: 0;
+}
+
+.atlas-section {
+  margin: 0 0 2.25em;
+}
+
+.atlas-section + .atlas-section {
+  page-break-before: always;
+  break-before: page;
+}
+
+.atlas-section__title {
+  font-size: 1.15em;
+  color: #1e3a5f;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 0.35em;
+  margin: 0 0 1em;
+}
+
+.atlas-recap__callout {
+  margin: 0;
+  padding: 0.85em 0 0.85em 1em;
+  border-left: 3px solid #0e7490;
+}
+
+.atlas-recap__callout p {
+  margin: 0;
+}
+
+.atlas-character-list {
+  margin: 0;
+  padding: 0;
+}
+
+.atlas-character {
+  margin: 0 0 2.5em;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.atlas-character__figure {
+  margin: 0 0 0.85em;
+  padding: 0;
+}
+
+.atlas-character__image {
+  width: auto;
+  max-width: 85%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.atlas-character__name {
+  font-size: 1.1em;
+  margin: 0 0 0.5em;
+  color: #1e3a5f;
+}
+
+.atlas-character__about {
+  text-align: left;
+  margin: 0 auto;
+  max-width: 32em;
+}
+
+.atlas-character__about p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.atlas-location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.atlas-location {
+  margin: 0 0 1.25em;
+  padding: 0 0 0 1em;
+  border-left: 2px solid #cbd5e1;
+}
+
+.atlas-location__name {
+  font-size: 1em;
+  margin: 0 0 0.3em;
+  color: #1e3a5f;
+}
+
+.atlas-location p {
+  margin: 0;
 }`;
 
 function chapterFileName(index) {
@@ -125,6 +252,56 @@ function addCover(oebps, cover, manifestItems, spineItems) {
   );
   spineItems.push('<itemref idref="cover"/>');
 }
+
+async function loadStoryAtlasAssets(storyAtlas) {
+  if (!storyAtlas?.xhtml) return null;
+
+  const portraits = await Promise.all(
+    (storyAtlas.characters ?? []).map(async (character) => {
+      if (!character.imageUrl) {
+        return { id: character.id, imagePath: null, imageBuffer: null };
+      }
+
+      try {
+        return {
+          id: character.id,
+          imagePath: atlasPortraitPath(character.id),
+          imageBuffer: await fetchImageAsArrayBuffer(character.imageUrl),
+        };
+      } catch (error) {
+        console.error(`Skipping atlas portrait for ${character.id}:`, error);
+        return { id: character.id, imagePath: null, imageBuffer: null };
+      }
+    })
+  );
+
+  return { xhtml: storyAtlas.xhtml, portraits };
+}
+
+function addStoryAtlas(oebps, atlasAssets, manifestItems, spineItems, navPoints) {
+  if (!atlasAssets?.xhtml) return;
+
+  for (const portrait of atlasAssets.portraits) {
+    if (!portrait.imagePath || !portrait.imageBuffer) continue;
+    oebps.file(portrait.imagePath, portrait.imageBuffer);
+    manifestItems.push(
+      `<item id="atlas-img-${portrait.id}" href="${portrait.imagePath}" media-type="image/jpeg"/>`
+    );
+  }
+
+  oebps.file("story-atlas.xhtml", atlasAssets.xhtml);
+  manifestItems.push(
+    '<item id="story-atlas" href="story-atlas.xhtml" media-type="application/xhtml+xml"/>'
+  );
+  spineItems.push('<itemref idref="story-atlas"/>');
+  navPoints.unshift(
+    `<navPoint id="nav-atlas" playOrder="0">
+        <navLabel><text>Story Atlas</text></navLabel>
+        <content src="story-atlas.xhtml"/>
+      </navPoint>`
+  );
+}
+
 
 async function loadChapterAssets(chapter, index) {
   const openerPromise = chapter.imageUrl
@@ -257,7 +434,7 @@ function addPackageFiles(oebps, { title, author, manifestItems, spineItems, navP
   );
 }
 
-export async function buildEpub({ title, author, cover, chapters }) {
+export async function buildEpub({ title, author, cover, storyAtlas, chapters }) {
   const zip = new JSZip();
   const sortedChapters = [...chapters].sort((a, b) => a.order - b.order);
   const manifestItems = [];
@@ -269,6 +446,9 @@ export async function buildEpub({ title, author, cover, chapters }) {
   const oebps = zip.folder("OEBPS");
   addStyles(oebps, manifestItems);
   addCover(oebps, cover, manifestItems, spineItems);
+
+  const atlasAssets = await loadStoryAtlasAssets(storyAtlas);
+  addStoryAtlas(oebps, atlasAssets, manifestItems, spineItems, navPoints);
 
   const chapterAssets = await Promise.all(
     sortedChapters.map((chapter, index) => loadChapterAssets(chapter, index))

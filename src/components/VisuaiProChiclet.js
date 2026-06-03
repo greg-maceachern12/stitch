@@ -1,19 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
-  BookMarked,
+  ArrowUpRight,
   Check,
-  Cpu,
-  Layers,
   Loader2,
   Sparkles,
   X,
 } from "lucide-react";
 import { requestProAccess } from "@/lib/client/proAccessRequest";
+import { PRO_FEATURES } from "@/lib/proFeatures";
 
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -24,28 +24,7 @@ function getFocusableElements(container) {
   );
 }
 
-const PRO_FEATURES = [
-  {
-    id: "story-atlas",
-    icon: BookMarked,
-    title: "Story Atlas",
-    description: "Character portraits and location art before chapter one.",
-  },
-  {
-    id: "in-chapter",
-    icon: Layers,
-    title: "In-chapter art",
-    description: "Illustrations placed beside the passages they belong to.",
-  },
-  {
-    id: "custom-models",
-    icon: Cpu,
-    title: "Custom models",
-    description: "Grok, Flux, Seedream, Gemini, and more — your pick per book.",
-  },
-];
-
-function ProFeatureRow({ feature, index }) {
+function ProFeatureRow({ feature, index, onNavigate }) {
   const Icon = feature.icon;
 
   return (
@@ -63,6 +42,14 @@ function ProFeatureRow({ feature, index }) {
         <p className="mt-1 text-xs leading-relaxed text-muted">
           {feature.description}
         </p>
+        <Link
+          href={`/pro/${feature.slug}`}
+          onClick={onNavigate}
+          className="mt-1.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-[var(--pro-blue)] underline-offset-2 transition-colors hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pro-blue)]/60"
+        >
+          Learn more
+          <ArrowUpRight className="h-3 w-3" aria-hidden />
+        </Link>
       </div>
     </li>
   );
@@ -203,7 +190,7 @@ function VisuaiProModal({
         <div className="visuai-pro-modal-frame overflow-hidden rounded-md border border-white/20 bg-surface shadow-[0_32px_64px_-24px_rgba(6,17,92,0.45),0_0_0_1px_rgba(255,255,255,0.12)_inset]">
           <div className="visuai-pro-modal-scene relative aspect-[500/280] w-full">
             <Image
-              src="/pro_bg.png"
+              src="/style-refs/oil-painting.jpg"
               alt=""
               fill
               priority
@@ -264,6 +251,7 @@ function VisuaiProModal({
                     key={feature.id}
                     feature={feature}
                     index={index}
+                    onNavigate={onClose}
                   />
                 ))}
               </ul>

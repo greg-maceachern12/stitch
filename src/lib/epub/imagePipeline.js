@@ -14,6 +14,8 @@ import { getImageModel } from "@/lib/imageModels";
 import { removeImages, renderChapterHtml } from "./chapters";
 import { prepareChapterForSectionIllustrations } from "./sectionIllustrations";
 
+const SECTION_ART_IMAGE_CONCURRENCY = 2;
+
 async function mapWithConcurrency(items, concurrency, fn) {
   const results = new Array(items.length);
   let nextIndex = 0;
@@ -40,6 +42,7 @@ async function generateChapterIllustrations({
   onStep,
   imageStyle,
   imageModel,
+  concurrency = SECTION_ART_IMAGE_CONCURRENCY,
 }) {
   if (!chapter.targetCount || chapter.selectionCandidates.length === 0) {
     return [];
@@ -60,8 +63,10 @@ async function generateChapterIllustrations({
 
   onStep?.("image");
 
-  const results = await Promise.all(
-    selections.map(async (selection) => {
+  const results = await mapWithConcurrency(
+    selections,
+    concurrency,
+    async (selection) => {
       try {
         const imageUrl = await generateImageFromPrompt(
           selection.prompt,
@@ -80,7 +85,7 @@ async function generateChapterIllustrations({
         );
         return null;
       }
-    })
+    }
   );
 
   const illustrations = results.filter(Boolean);
@@ -202,6 +207,7 @@ export async function runImagePipeline({
           onStep: reportGenerating,
           imageStyle,
           imageModel: resolvedImageModel,
+          concurrency: Math.min(concurrency, SECTION_ART_IMAGE_CONCURRENCY),
         });
       } else {
         chapter.imageUrl = await generateChapterOpenerImage({

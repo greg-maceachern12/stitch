@@ -1,0 +1,3 @@
+export const MAX_ATLAS_CHARACTERS = 6;
+export const MAX_ATLAS_LOCATIONS = 5;
+export const ATLAS_PORTRAIT_CONCURRENCY = 2;

@@ -359,9 +359,13 @@ export default function OptionsPill({
     <details ref={detailsRef} className="group/options relative">
       <summary
         className={`options-pill inline-flex list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden ${
-          disabled ? "pointer-events-none opacity-50" : "cursor-pointer"
+          disabled ? "cursor-default opacity-50" : "cursor-pointer"
         }`}
         aria-label="Generation options"
+        aria-disabled={disabled || undefined}
+        onClick={(event) => {
+          if (disabled) event.preventDefault();
+        }}
       >
         <span className="font-display-semibold">Options</span>
         <span className="hidden max-w-[8rem] truncate text-[10px] font-normal text-muted sm:inline">

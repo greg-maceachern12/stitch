@@ -4,6 +4,7 @@ import { getImageModel } from "@/lib/imageModels";
 const GENERATE_PROMPT_API = "/api/generate-prompt";
 const GENERATE_IMAGE_API = "/api/generate-image";
 const SELECT_ILLUSTRATION_SECTIONS_API = "/api/select-illustration-sections";
+const GENERATE_STORY_ATLAS_PLAN_API = "/api/generate-story-atlas-plan";
 
 function routeLabel(url) {
   try {

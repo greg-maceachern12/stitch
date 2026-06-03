@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Mail, Home, Info, Loader2 } from "lucide-react";
+import {
+  Menu,
+  X,
+  Mail,
+  Home,
+  Info,
+  Loader2,
+  BookOpen,
+} from "lucide-react";
+
+const EBOOKS_URL = "https://www.ebooks.com";
 
 const WEB3FORMS_URL = "https://api.web3forms.com/submit";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  const [issuesMounted, setIssuesMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -26,14 +38,39 @@ const Navbar = () => {
     setError(null);
   };
 
-  const closeIssues = () => {
+  const closeIssues = useCallback(() => {
     if (sending) return;
     setIssuesOpen(false);
     setEmail("");
     setBody("");
     setSent(false);
     setError(null);
-  };
+  }, [sending]);
+
+  useEffect(() => {
+    setIssuesMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!issuesOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && !sending) {
+        event.preventDefault();
+        closeIssues();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [issuesOpen, sending, closeIssues]);
 
   const submitIssues = async (event) => {
     event.preventDefault();
@@ -105,6 +142,19 @@ const Navbar = () => {
               <Link href="/about" className="nav-pill">
                 About
               </Link>
+              <a
+                href={EBOOKS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-pill inline-flex items-center gap-2"
+              >
+                <BookOpen
+                  className="h-4 w-4 shrink-0 text-violet-500"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                <span>Get EPUBs</span>
+              </a>
               <button
                 type="button"
                 onClick={openIssues}
@@ -142,6 +192,22 @@ const Navbar = () => {
                   About
                 </span>
               </Link>
+              <a
+                href={EBOOKS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-pill block"
+                onClick={closeMenu}
+              >
+                <span className="flex items-center gap-3">
+                  <BookOpen
+                    className="h-4 w-4 shrink-0 text-violet-500"
+                    strokeWidth={2.25}
+                    aria-hidden="true"
+                  />
+                  Get EPUBs
+                </span>
+              </a>
               <button
                 type="button"
                 className="nav-pill block w-full text-left"
@@ -157,69 +223,77 @@ const Navbar = () => {
         )}
       </nav>
 
-      {issuesOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 p-4">
-          <button
-            type="button"
-            className="absolute inset-0"
-            aria-label="Close"
-            onClick={closeIssues}
-          />
-          <div className="form-card relative z-10 w-full max-w-md">
-            <h2 className="text-lg text-foreground">Report an issue</h2>
-            <p className="mt-1 text-sm text-muted">
-              What broke? We&apos;ll reply by email.
-            </p>
-
-            {sent ? (
-              <p className="mt-4 text-sm text-foreground">Thanks — message sent.</p>
-            ) : (
-              <form onSubmit={submitIssues} className="mt-4 space-y-3">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  disabled={sending}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                />
-                <textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="What happened?"
-                  required
-                  rows={5}
-                  disabled={sending}
-                  className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm"
-                />
-                {error && (
-                  <p className="text-xs text-red-600">{error}</p>
-                )}
-                <button type="submit" disabled={sending} className="btn-primary">
-                  {sending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Sending…
-                    </>
-                  ) : (
-                    "Send"
-                  )}
-                </button>
-              </form>
-            )}
-
+      {issuesMounted &&
+        issuesOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <button
               type="button"
+              className="visuai-pro-modal-backdrop absolute inset-0 cursor-default bg-[#1c1917]/50 backdrop-blur-md"
+              aria-label="Close issue report"
               onClick={closeIssues}
-              disabled={sending}
-              className="mt-3 w-full text-center text-xs text-muted hover:text-foreground"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="issues-dialog-title"
+              className="visuai-pro-modal-panel form-card relative z-10 w-full max-w-md shadow-[0_24px_56px_-20px_rgba(28,25,23,0.45)]"
             >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+              <h2 id="issues-dialog-title" className="text-lg text-foreground">
+                Report an issue
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                What broke? We&apos;ll reply by email.
+              </p>
+
+              {sent ? (
+                <p className="mt-4 text-sm text-foreground">Thanks — message sent.</p>
+              ) : (
+                <form onSubmit={submitIssues} className="mt-4 space-y-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    disabled={sending}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="What happened?"
+                    required
+                    rows={5}
+                    disabled={sending}
+                    className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  {error && <p className="text-xs text-red-600">{error}</p>}
+                  <button type="submit" disabled={sending} className="btn-primary">
+                    {sending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Sending…
+                      </>
+                    ) : (
+                      "Send"
+                    )}
+                  </button>
+                </form>
+              )}
+
+              <button
+                type="button"
+                onClick={closeIssues}
+                disabled={sending}
+                className="mt-3 w-full text-center text-xs text-muted hover:text-foreground"
+              >
+                Close
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };

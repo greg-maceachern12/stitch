@@ -19,6 +19,16 @@ export function getOpenRouterTextModel() {
   return process.env.OPENROUTER_MODEL || DEFAULT_TEXT_MODEL;
 }
 
+/** Story Atlas plan generation — always Gemini 3.5 Flash (not OPENROUTER_MODEL). */
+export function getStoryAtlasTextModel() {
+  return DEFAULT_TEXT_MODEL;
+}
+
+/** Section art selection — always Gemini 3.5 Flash (1M context, not OPENROUTER_MODEL). */
+export function getSectionSelectionModel() {
+  return DEFAULT_TEXT_MODEL;
+}
+
 export function getOpenRouterImageModel(requestedModel) {
   return getImageModel(requestedModel).id;
 }

@@ -70,6 +70,13 @@ function StatusIcon({ status }) {
   return <Circle className="h-4 w-4 shrink-0 text-muted/40" aria-hidden />;
 }
 
+function atlasCharacterStatusLabel(status) {
+  if (status === ATLAS_CHARACTER_STATUS.IMAGE) return "Rendering portrait";
+  if (status === ATLAS_CHARACTER_STATUS.DONE) return "Portrait ready";
+  if (status === ATLAS_CHARACTER_STATUS.ERROR) return "Failed";
+  return "Waiting";
+}
+
 function ChapterLimitBanner({ onOpenPro }) {
   return (
     <p
@@ -129,6 +136,7 @@ const Loading = ({
     bookTitle,
     chapters = [],
     stitching,
+    atlas,
     isPreparing,
     fullBookUnlocked,
     sectionArtEnabled: progressSectionArt,
@@ -189,6 +197,38 @@ const Loading = ({
             style={{ width: `${percent}%` }}
           />
         </div>
+      )}
+
+      {showAtlasList && (
+        <ol className="max-h-48 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-surface/50 p-2">
+          {atlas.characters.map((character) => {
+            const isActive = character.status === ATLAS_CHARACTER_STATUS.IMAGE;
+            return (
+              <li
+                key={character.id}
+                className={`flex items-start gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
+                  isActive ? "bg-accent/8" : ""
+                }`}
+              >
+                <StatusIcon status={character.status} />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`font-display truncate ${
+                      character.status === ATLAS_CHARACTER_STATUS.PENDING
+                        ? "text-muted"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {character.name}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {atlasCharacterStatusLabel(character.status)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       )}
 
       {showChapterList && (

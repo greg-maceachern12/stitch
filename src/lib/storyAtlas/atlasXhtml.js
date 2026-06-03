@@ -15,8 +15,8 @@ function characterCard(character) {
 
   return `<article class="atlas-character">
     ${imageBlock}
-    <div class="atlas-character__body">
-      <h3 class="atlas-character__name">${escapeXml(character.name)}</h3>
+    <h3 class="atlas-character__name">${escapeXml(character.name)}</h3>
+    <div class="atlas-character__about">
       ${paragraph(character.description)}
     </div>
   </article>`;
@@ -38,7 +38,9 @@ export function buildStoryAtlasXhtml(plan, bookTitle) {
   const recapSection = recapText
     ? `<section class="atlas-section atlas-recap" aria-labelledby="atlas-recap-heading">
         <h2 id="atlas-recap-heading" class="atlas-section__title">Previously</h2>
-        ${paragraph(recapText)}
+        <div class="atlas-recap__callout">
+          ${paragraph(recapText)}
+        </div>
       </section>`
     : "";
 
@@ -54,7 +56,7 @@ export function buildStoryAtlasXhtml(plan, bookTitle) {
   const characterSection = characters
     ? `<section class="atlas-section atlas-characters" aria-labelledby="atlas-characters-heading">
         <h2 id="atlas-characters-heading" class="atlas-section__title">Characters</h2>
-        <div class="atlas-character-grid">
+        <div class="atlas-character-list">
           ${characters}
         </div>
       </section>`

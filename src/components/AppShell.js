@@ -108,17 +108,6 @@ export default function AppShell() {
           />
         )}
       </div>
-
-      <footer className="mt-12 text-center text-sm text-muted">
-        <a
-          href="https://buymeacoffee.com/gregmac"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline-offset-4 hover:text-foreground hover:underline"
-        >
-          Buy me a coffee
-        </a>
-      </footer>
     </SiteChrome>
   );
 }

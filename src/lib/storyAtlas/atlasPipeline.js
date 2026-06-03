@@ -100,8 +100,7 @@ export async function runStoryAtlasPipeline({
         const imageUrl = await generateImageFromPrompt(
           prompt,
           imageStyle,
-          imageModel,
-          { portrait: true }
+          imageModel
         );
         portraits[character.id] = imageUrl;
 

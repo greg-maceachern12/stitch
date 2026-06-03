@@ -11,6 +11,9 @@ import {
 const PLACEHOLDER_IMAGE =
   "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
 
+/** Landscape ratio for all generated book images (OpenRouter image_config). */
+const DEFAULT_IMAGE_ASPECT_RATIO = "16:9";
+
 function buildImageGenerationContent(
   promptText,
   style,
@@ -113,6 +116,7 @@ async function sendImageRequest({
   style,
   includeReferenceImage,
   referenceDataUrl,
+  aspectRatio = DEFAULT_IMAGE_ASPECT_RATIO,
 }) {
   return client.chat.send({
     chatRequest: {
@@ -131,7 +135,7 @@ async function sendImageRequest({
         },
       ],
       imageConfig: {
-        aspect_ratio: "16:9",
+        aspect_ratio: aspectRatio,
       },
     },
   });
@@ -196,7 +200,10 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     let retriedEmptyResponse = false;
     let response;
 
-    const requestWithAspect = { ...baseRequest, aspectRatio };
+    const requestWithAspect = {
+      ...baseRequest,
+      aspectRatio: DEFAULT_IMAGE_ASPECT_RATIO,
+    };
 
     try {
       response = await sendImageRequest(requestWithAspect);

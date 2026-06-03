@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Github, ExternalLink, ArrowLeft } from "lucide-react";
+import { Github, ArrowLeft } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 
 function About() {
@@ -54,9 +54,36 @@ function About() {
           <h2>Planned improvements</h2>
           <ul>
             <li>
-              Character Glossary: a per-book index of characters, with images and descriptions.
+              <strong>ControlNets &amp; style consistency:</strong> use ControlNets to lock
+              composition, pose, and framing so a character looks like the same person from
+              one scene to the next, with a per-book art style you can pick once and keep.
             </li>
-            <li>ControlNets for better image generation.</li>
+            <li>
+              <strong>Art style presets:</strong> render any book as oil painting, graphic
+              novel, watercolor, cinematic concept art, or ink sketch — switchable per book.
+            </li>
+            <li>
+              <strong>Send to Kindle:</strong> push the illustrated EPUB straight to your
+              library with Amazon&apos;s &ldquo;Send to Kindle,&rdquo; so images show up
+              inline on any Kindle device or app.
+            </li>
+            <li>
+              <strong>Highlight-to-illustrate:</strong> select a passage on Kindle and get an
+              image for exactly that moment, instead of waiting on whole-chapter generation.
+            </li>
+            <li>
+              <strong>Spoiler-safe generation:</strong> images only ever draw on text up to
+              your current page, so nothing later in the book gets revealed early.
+            </li>
+            <li>
+              <strong>Cover &amp; chapter art:</strong> auto-generate a fresh cover and chapter
+              header illustrations that match the chosen style.
+            </li>
+            <li>
+              <strong>More formats (MOBI, PDF, and more):</strong> upload and export beyond EPUB —
+              illustrated MOBI for older Kindles and Send to Kindle, PDF for tablets and print,
+              plus other common ebook formats so you can read wherever you already do.
+            </li>
           </ul>
 
           <aside className="not-prose my-8 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">

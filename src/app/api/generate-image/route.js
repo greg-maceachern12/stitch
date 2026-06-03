@@ -5,11 +5,9 @@ import { getImageModel } from "@/lib/imageModels";
 export async function POST(request) {
   return handlePost(
     request,
-    async ({ prompt, imageStyle, imageModel, portrait }) => {
+    async ({ prompt, imageStyle, imageModel }) => {
       const { id: resolvedModel } = getImageModel(imageModel);
-      const result = await generateImage(prompt, imageStyle, resolvedModel, {
-        portrait: Boolean(portrait),
-      });
+      const result = await generateImage(prompt, imageStyle, resolvedModel);
       return Response.json({ result });
     },
     "POST /api/generate-image"

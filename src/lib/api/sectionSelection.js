@@ -5,10 +5,14 @@ import {
 } from "@/lib/epub/sectionIllustrations";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload, truncate } from "./logger";
-import { getOpenRouterTextModel, requireOpenRouterClient } from "./openrouter";
+import { getSectionSelectionModel, requireOpenRouterClient } from "./openrouter";
+
+const MAX_SERVER_EXCERPT_CHARS = 1200;
 
 function buildSystemPrompt(promptStyleGuide) {
   return `You choose the best in-chapter passages to illustrate for an EPUB.
+
+You receive the full chapter as an ordered list of anchored passages. Each passage has an anchorId, kind (heading or paragraph), and the full passage text.
 
 Return only valid JSON. The JSON must be an array of objects with:
 - anchorId: one of the provided anchor ids
@@ -16,7 +20,8 @@ Return only valid JSON. The JSON must be an array of objects with:
 - altText: concise image alt text
 - caption: a short neutral caption
 
-Choose visually specific scenes with concrete settings, objects, movement, atmosphere, or dramatic action.
+Choose exactly the requested number of passages (targetCount). Spread selections across the chapter — beginning, middle, and end — not clustered in one stretch.
+Favor visually specific scenes with concrete settings, objects, movement, atmosphere, or dramatic action.
 Avoid passages that are mostly exposition, dialogue without visual context, copyright text, or chapter-title material.
 Every prompt must describe the scene in this visual style: ${promptStyleGuide}
 Prompts should focus on atmospheric elements, surroundings, objects, and composition. Do not focus on character faces.`;
@@ -52,7 +57,7 @@ function sanitizeCandidates(candidates) {
       anchorId: candidate.anchorId,
       index: Number.isFinite(candidate.index) ? candidate.index : index,
       kind: candidate.kind || "p",
-      excerpt: truncate(candidate.excerpt, 900),
+      excerpt: truncate(candidate.excerpt, MAX_SERVER_EXCERPT_CHARS),
     }));
 }
 
@@ -90,7 +95,7 @@ export async function selectIllustrationSections({
     return fallback();
   }
 
-  const model = getOpenRouterTextModel();
+  const model = getSectionSelectionModel();
   const log = logApiCall("OpenRouter section selection", {
     provider: "openrouter",
     model,

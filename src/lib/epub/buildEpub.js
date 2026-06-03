@@ -64,20 +64,132 @@ const EPUB_STYLES = `body {
 .chapter-prose {
   margin-top: 0;
 }
-.story-atlas { margin: 0; }
-.atlas-header { text-align: center; margin: 0 0 2em; padding: 1.25em 0.75em; border-bottom: 2px solid #1e3a5f; }
-.atlas-brand { font-size: 0.75em; letter-spacing: 0.16em; text-transform: uppercase; color: #0e7490; margin: 0 0 0.75em; }
-.atlas-title { font-size: 1.65em; margin: 0 0 0.35em; color: #1e3a5f; }
-.atlas-tagline { font-size: 0.9em; font-style: italic; color: #555; margin: 0; }
-.atlas-section { margin: 0 0 2em; }
-.atlas-section__title { font-size: 1.15em; color: #1e3a5f; border-bottom: 1px solid #cbd5e1; padding-bottom: 0.35em; margin: 0 0 0.85em; }
-.atlas-character { margin: 0 0 1.5em; page-break-inside: avoid; break-inside: avoid; }
-.atlas-character__figure { margin: 0 0 0.75em; text-align: center; }
-.atlas-character__image { max-width: 72%; height: auto; display: block; margin: 0 auto; }
-.atlas-character__name { font-size: 1.05em; margin: 0 0 0.35em; color: #1e3a5f; }
-.atlas-location-list { list-style: none; padding: 0; margin: 0; }
-.atlas-location { margin: 0 0 1.1em; }
-.atlas-location__name { font-size: 1em; margin: 0 0 0.25em; color: #1e3a5f; }`;
+.story-atlas {
+  margin: 0;
+  padding: 0 0.25em;
+}
+
+.atlas-header {
+  text-align: center;
+  margin: 0 0 2.25em;
+  padding: 1.5em 0.75em 1.25em;
+  border-bottom: 2px solid #1e3a5f;
+}
+
+.atlas-brand {
+  font-size: 0.75em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0e7490;
+  margin: 0 0 0.75em;
+}
+
+.atlas-title {
+  font-size: 1.65em;
+  line-height: 1.25;
+  margin: 0 0 0.35em;
+  color: #1e3a5f;
+}
+
+.atlas-tagline {
+  font-size: 0.9em;
+  font-style: italic;
+  color: #555555;
+  margin: 0;
+}
+
+.atlas-section {
+  margin: 0 0 2.25em;
+}
+
+.atlas-section + .atlas-section {
+  page-break-before: always;
+  break-before: page;
+}
+
+.atlas-section__title {
+  font-size: 1.15em;
+  color: #1e3a5f;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 0.35em;
+  margin: 0 0 1em;
+}
+
+.atlas-recap__callout {
+  margin: 0;
+  padding: 0.85em 0 0.85em 1em;
+  border-left: 3px solid #0e7490;
+}
+
+.atlas-recap__callout p {
+  margin: 0;
+}
+
+.atlas-character-list {
+  margin: 0;
+  padding: 0;
+}
+
+.atlas-character {
+  margin: 0 0 2.5em;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.atlas-character__figure {
+  margin: 0 0 0.85em;
+  padding: 0;
+}
+
+.atlas-character__image {
+  width: auto;
+  max-width: 85%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.atlas-character__name {
+  font-size: 1.1em;
+  margin: 0 0 0.5em;
+  color: #1e3a5f;
+}
+
+.atlas-character__about {
+  text-align: left;
+  margin: 0 auto;
+  max-width: 32em;
+}
+
+.atlas-character__about p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.atlas-location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.atlas-location {
+  margin: 0 0 1.25em;
+  padding: 0 0 0 1em;
+  border-left: 2px solid #cbd5e1;
+}
+
+.atlas-location__name {
+  font-size: 1em;
+  margin: 0 0 0.3em;
+  color: #1e3a5f;
+}
+
+.atlas-location p {
+  margin: 0;
+}`;
 
 function chapterFileName(index) {
   return `chapter-${String(index + 1).padStart(3, "0")}.xhtml`;

@@ -56,7 +56,9 @@ function normalizeCharacters(characters, maxCharacters) {
 
     if (!name || !description || !visualBrief) continue;
 
-    let id = typeof entry?.id === "string" ? entry.id.trim() : slugify(name);
+    let id = slugify(
+      typeof entry?.id === "string" && entry.id.trim() ? entry.id : name
+    );
     if (!id) id = slugify(name);
     if (seen.has(id)) {
       id = `${id}-${normalized.length + 1}`;
@@ -82,7 +84,9 @@ function normalizeLocations(locations, maxLocations) {
       typeof entry?.meaning === "string" ? entry.meaning.trim() : "";
     if (!name || !meaning) continue;
 
-    let id = typeof entry?.id === "string" ? entry.id.trim() : slugify(name);
+    let id = slugify(
+      typeof entry?.id === "string" && entry.id.trim() ? entry.id : name
+    );
     if (!id) id = slugify(name);
     if (seen.has(id)) {
       id = `${id}-${normalized.length + 1}`;
@@ -132,7 +136,7 @@ export function mockStoryAtlasPlan() {
         description:
           "A determined figure caught between duty and doubt, still learning who to trust.",
         visualBrief:
-          "Adult with thoughtful eyes, practical travel clothes, windswept hair, reserved expression, bust portrait",
+          "early 30s, fair skin, shoulder-length windswept brown hair, grey eyes, lean build, practical layered travel clothes, reserved thoughtful expression",
       },
       {
         id: "ally",
@@ -140,7 +144,7 @@ export function mockStoryAtlasPlan() {
         description:
           "Quick-witted and loyal, offering humor and sharp instincts at the journey's start.",
         visualBrief:
-          "Warm smile, layered cloak, satchel strap, lively eyes, bust portrait",
+          "mid 20s, warm brown skin, short black curls, dark lively eyes, slim build, layered cloak with a satchel strap, warm easy smile",
       },
     ],
     locations: [

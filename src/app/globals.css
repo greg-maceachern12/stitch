@@ -122,11 +122,11 @@
     border-color: rgba(55, 53, 47, 0.2);
   }
 
-  .visuai-pro-chiclet {
-    @apply relative isolate rounded-full border-0 bg-transparent p-[2px] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)];
+  .pro-gradient-ring {
+    @apply relative isolate border-0 bg-transparent p-[2px];
   }
 
-  .visuai-pro-chiclet::before {
+  .pro-gradient-ring::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -145,8 +145,83 @@
     pointer-events: none;
   }
 
-  .visuai-pro-chiclet:hover::before {
+  .pro-gradient-ring:hover::before {
     animation-duration: 5s;
+  }
+
+  .pro-gradient-ring--animate-in {
+    animation: form-card-pro-shell-in 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .pro-gradient-ring--animate-in::before {
+    animation:
+      pro-gradient-ring-border-in 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+      visuai-pro-ring-spin 10s linear 0.72s infinite;
+  }
+
+  .pro-gradient-ring--animate-in:hover::before {
+    animation-duration: 0.72s, 5s;
+  }
+
+  .pro-gradient-ring--animate-in .pro-gradient-ring-inner {
+    animation: form-card-pro-inner-in 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes pro-gradient-ring-border-in {
+    from {
+      opacity: 0;
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes form-card-pro-shell-in {
+    from {
+      opacity: 0.85;
+      transform: scale(0.992);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes form-card-pro-inner-in {
+    from {
+      box-shadow:
+        0 0 0 rgba(65, 169, 254, 0),
+        0 0 0 rgba(210, 129, 192, 0);
+    }
+    to {
+      box-shadow:
+        0 1px 2px rgba(55, 53, 47, 0.04),
+        0 0 28px -8px rgba(65, 169, 254, 0.28),
+        0 0 24px -10px rgba(210, 129, 192, 0.18);
+    }
+  }
+
+  .pro-gradient-ring-inner {
+    @apply relative z-[1] bg-background;
+    border-radius: calc(0.375rem - 2px);
+  }
+
+  .pro-gradient-ring-inner--fill {
+    background: var(--pro-fill);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  }
+
+  .pro-gradient-ring:hover .pro-gradient-ring-inner--fill {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.98),
+      0 0 20px -4px rgba(65, 169, 254, 0.2),
+      0 0 16px -6px rgba(210, 129, 192, 0.15);
+  }
+
+  .visuai-pro-chiclet {
+    @apply pro-gradient-ring rounded-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)];
   }
 
   .visuai-pro-chiclet-inner {
@@ -393,6 +468,9 @@
     .visuai-pro-modal-panel,
     .visuai-pro-feature-row,
     .visuai-pro-chiclet::before,
+    .pro-gradient-ring::before,
+    .pro-gradient-ring--animate-in,
+    .pro-gradient-ring--animate-in .pro-gradient-ring-inner,
     .visuai-pro-access-form {
       animation: none;
       transition: none;

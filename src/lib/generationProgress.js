@@ -1,5 +1,6 @@
 export const MAX_ILLUSTRATED_CHAPTERS = 3;
-export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 3;
+/** Per-chapter cap used for conservative UI price estimates. */
+export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
 
 export const CHAPTER_STATUS = {
   PENDING: "pending",

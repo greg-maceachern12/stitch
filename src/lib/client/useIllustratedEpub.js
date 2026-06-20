@@ -32,6 +32,7 @@ import {
   parseEpubFile,
 } from "@/lib/epub/chapters";
 import { logGenerationStart } from "@/lib/client/generationLog";
+import { estimateStoryChapterTargetCounts } from "@/lib/epub/illustrationEstimates";
 import { runImagePipeline } from "@/lib/epub/imagePipeline";
 import { extractBookIdentity } from "@/lib/storyAtlas/metadata";
 import { shouldGenerateStoryAtlas } from "@/lib/storyAtlas/enabled";
@@ -91,10 +92,21 @@ async function loadParsedBook(epubFile, fullBookUnlocked = false) {
   const cover = await readBookCover(epubReader);
   const allChapters = flattenToc(toc);
   const storyChapters = extractStoryChapters(allChapters);
+  const chapterTargetCounts = await estimateStoryChapterTargetCounts(
+    epubReader,
+    storyChapters
+  );
   const bookMeta = bookMetaFrom(metadata, cover, storyChapters, fullBookUnlocked);
   const bookIdentity = extractBookIdentity(metadata, packageMetadata);
 
-  return { epubReader, bookMeta, bookIdentity, allChapters, storyChapters };
+  return {
+    epubReader,
+    bookMeta,
+    bookIdentity,
+    allChapters,
+    storyChapters,
+    chapterTargetCounts,
+  };
 }
 
 export function useIllustratedEpub() {
@@ -186,7 +198,8 @@ export function useIllustratedEpub() {
           parsed.storyChapters,
           fullBookUnlocked,
           false,
-          storyAtlasEnabled && proUnlocked
+          storyAtlasEnabled && proUnlocked,
+          parsed.chapterTargetCounts
         )
       );
     } catch (error) {
@@ -255,7 +268,8 @@ export function useIllustratedEpub() {
           parsedBookRef.current.storyChapters,
           current.fullBookUnlocked,
           current.sectionArtEnabled,
-          enabled
+          enabled,
+          parsedBookRef.current.chapterTargetCounts
         )
       );
     }
@@ -321,11 +335,13 @@ export function useIllustratedEpub() {
         allChapters,
         imageStyle,
         imageModel: selectedImageModel,
+        illustrationMode,
         useSectionArt,
         proUnlocked,
         fullBookUnlocked: effectiveFullBook,
         storyAtlasEnabled: generateAtlas,
         concurrency: PIPELINE_CONCURRENCY,
+        chapterTargetCounts: parsed.chapterTargetCounts,
       });
 
       let storyAtlas = null;
@@ -369,6 +385,7 @@ export function useIllustratedEpub() {
           ...(currentProgress ?? {}),
           sectionArtEnabled: useSectionArt,
           fullBookUnlocked: effectiveFullBook,
+          chapterTargetCounts: parsed.chapterTargetCounts,
         },
         onProgress: (update) => {
           currentProgress = update;

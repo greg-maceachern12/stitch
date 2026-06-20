@@ -1,7 +1,7 @@
 import { formatPerImageCost, getImageCostUsd } from "@/lib/imageModelPricing";
 
-/** Default OpenRouter image model (Grok). */
-export const DEFAULT_IMAGE_MODEL = "x-ai/grok-imagine-image-quality";
+/** Default OpenRouter image model (Riverflow 2.5). */
+export const DEFAULT_IMAGE_MODEL = "sourceful/riverflow-v2.5-fast";
 
 /** @type {Record<string, { label: string; logoUrl: string }>} */
 export const IMAGE_MODELS = {
@@ -25,6 +25,10 @@ export const IMAGE_MODELS = {
     label: "ChatGPT Image",
     logoUrl: "/model-logos/openai.png",
   },
+  "sourceful/riverflow-v2.5-fast": {
+    label: "Riverflow 2.5",
+    logoUrl: "/model-logos/sourceful.png",
+  },
 };
 
 export const IMAGE_MODEL_OPTIONS = Object.entries(IMAGE_MODELS).map(
@@ -46,7 +50,7 @@ export function getImageModel(modelId) {
   return { id, ...IMAGE_MODELS[id] };
 }
 
-/** Resolve a user-selected model id; invalid/missing values fall back to Grok. */
+/** Resolve a user-selected model id; invalid/missing values fall back to Riverflow 2.5. */
 export function resolveImageModel(requestedModel) {
   return getImageModel(requestedModel).id;
 }

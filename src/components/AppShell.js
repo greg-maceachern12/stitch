@@ -104,6 +104,9 @@ export default function AppShell() {
             progress={epubWorkflow.progress}
             imageModel={epubWorkflow.imageModel}
             illustrationMode={epubWorkflow.illustrationMode}
+            proUnlocked={epubWorkflow.proUnlocked}
+            fullBookUnlocked={epubWorkflow.fullBookUnlocked}
+            storyAtlasEnabled={epubWorkflow.storyAtlasEnabled}
             onOpenPro={proModal.openModal}
           />
         )}

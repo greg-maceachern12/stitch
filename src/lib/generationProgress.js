@@ -1,6 +1,9 @@
+import { MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER } from "@/lib/epub/sectionIllustrations";
+import { shouldUseSectionArt } from "@/lib/illustrationModes";
+import { MAX_ATLAS_CHARACTERS } from "@/lib/storyAtlas/constants";
+
 export const MAX_ILLUSTRATED_CHAPTERS = 3;
-/** Per-chapter cap used for conservative UI price estimates. */
-export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
+export { MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER };
 
 export const CHAPTER_STATUS = {
   PENDING: "pending",
@@ -67,6 +70,22 @@ const CHAPTER_STATUS_LABELS = {
 };
 
 const STITCH_LABEL = "Stitch book together";
+const ATLAS_LABEL = "Story Atlas";
+
+const ATLAS_STATUS_LABELS = {
+  [ATLAS_STATUS.PLANNING]: "Planning orientation page",
+  [ATLAS_STATUS.PORTRAITS]: "Rendering character portraits",
+  [ATLAS_STATUS.DONE]: "Story Atlas ready",
+  [ATLAS_STATUS.SKIPPED]: "Skipped",
+  [ATLAS_STATUS.ERROR]: "Failed",
+};
+
+export function atlasStatusLabel(status, phase) {
+  if (phase === PHASES.READY && status === ATLAS_STATUS.PENDING) {
+    return "Ready";
+  }
+  return ATLAS_STATUS_LABELS[status] ?? "Waiting";
+}
 
 export function chapterStatusLabel(status, phase, sectionArtEnabled = false) {
   if (phase === PHASES.READY && status === CHAPTER_STATUS.PENDING) {
@@ -87,14 +106,104 @@ export function getIllustrationChapterCount(chapterCount, fullBookUnlocked = fal
   return Math.min(MAX_ILLUSTRATED_CHAPTERS, total);
 }
 
+function sumChapterTargetCounts(chapterTargetCounts, fullBookUnlocked) {
+  const counts = Array.isArray(chapterTargetCounts) ? chapterTargetCounts : [];
+  const illustrated = fullBookUnlocked
+    ? counts
+    : counts.slice(0, MAX_ILLUSTRATED_CHAPTERS);
+  return illustrated.reduce(
+    (total, count) => total + Math.max(0, Number(count) || 0),
+    0
+  );
+}
+
 export function getEstimatedSectionIllustrationCount(
   chapterCount,
-  fullBookUnlocked = false
+  fullBookUnlocked = false,
+  chapterTargetCounts = null
 ) {
+  if (Array.isArray(chapterTargetCounts) && chapterTargetCounts.length > 0) {
+    return sumChapterTargetCounts(chapterTargetCounts, fullBookUnlocked);
+  }
+
   return (
     getIllustrationChapterCount(chapterCount, fullBookUnlocked) *
     MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER
   );
+}
+
+export function getEstimatedIllustrationImageCount({
+  sectionArtEnabled = false,
+  chapterCount = 0,
+  fullBookUnlocked = false,
+  chapterTargetCounts = null,
+} = {}) {
+  if (sectionArtEnabled) {
+    return getEstimatedSectionIllustrationCount(
+      chapterCount,
+      fullBookUnlocked,
+      chapterTargetCounts
+    );
+  }
+
+  return getIllustrationChapterCount(chapterCount, fullBookUnlocked);
+}
+
+/** Map options-menu toggles to the generation settings that affect image count. */
+export function resolveGenerationOptions({
+  proUnlocked = false,
+  illustrationMode,
+  fullBookUnlocked = false,
+  storyAtlasEnabled = false,
+} = {}) {
+  return {
+    sectionArtEnabled: shouldUseSectionArt(proUnlocked, illustrationMode),
+    fullBookUnlocked: Boolean(proUnlocked && fullBookUnlocked),
+    storyAtlasEnabled: Boolean(proUnlocked && storyAtlasEnabled),
+  };
+}
+
+export function getEstimatedAtlasPortraitCount(
+  storyAtlasEnabled,
+  characterCount = null
+) {
+  if (!storyAtlasEnabled) return 0;
+  if (typeof characterCount === "number" && characterCount >= 0) {
+    return Math.min(MAX_ATLAS_CHARACTERS, characterCount);
+  }
+  return MAX_ATLAS_CHARACTERS;
+}
+
+/** Total images for the current options menu + book (illustrations + atlas portraits). */
+export function getEstimatedGenerationImageCount({
+  proUnlocked = false,
+  illustrationMode,
+  fullBookUnlocked = false,
+  storyAtlasEnabled = false,
+  chapterCount = 0,
+  chapterTargetCounts = null,
+  atlasCharacterCount = null,
+} = {}) {
+  const resolved = resolveGenerationOptions({
+    proUnlocked,
+    illustrationMode,
+    fullBookUnlocked,
+    storyAtlasEnabled,
+  });
+
+  const illustrationImages = getEstimatedIllustrationImageCount({
+    sectionArtEnabled: resolved.sectionArtEnabled,
+    chapterCount,
+    fullBookUnlocked: resolved.fullBookUnlocked,
+    chapterTargetCounts,
+  });
+
+  const atlasImages = getEstimatedAtlasPortraitCount(
+    resolved.storyAtlasEnabled,
+    atlasCharacterCount
+  );
+
+  return illustrationImages + atlasImages;
 }
 
 export function hasLockedChapters(chapters = []) {
@@ -203,7 +312,8 @@ export function createReadyProgress(
   storyChapters,
   fullBookUnlocked = false,
   sectionArtEnabled = false,
-  storyAtlasEnabled = false
+  storyAtlasEnabled = false,
+  chapterTargetCounts = null
 ) {
   const chapters = buildChapterEntries(storyChapters, fullBookUnlocked);
 
@@ -213,10 +323,16 @@ export function createReadyProgress(
     fullBookUnlocked,
     sectionArtEnabled,
     storyAtlasEnabled,
+    chapterTargetCounts,
     isPreparing: false,
     chapters,
     atlas: storyAtlasEnabled
-      ? { enabled: true, status: ATLAS_STATUS.PENDING, characters: [] }
+      ? {
+          enabled: true,
+          label: ATLAS_LABEL,
+          status: ATLAS_STATUS.PENDING,
+          characters: [],
+        }
       : { enabled: false },
     stitching: { status: STITCH_STATUS.PENDING, label: STITCH_LABEL },
     message: readyMessage(storyChapters, fullBookUnlocked, sectionArtEnabled),
@@ -239,6 +355,7 @@ export function setAtlasPlanning(progress, message) {
     storyAtlasEnabled: true,
     atlas: {
       enabled: true,
+      label: progress.atlas?.label ?? ATLAS_LABEL,
       status: ATLAS_STATUS.PLANNING,
       characters: progress.atlas?.characters ?? [],
     },
@@ -253,6 +370,7 @@ export function setAtlasPortraits(progress, characters, message) {
     phase: PHASES.ATLAS,
     atlas: {
       enabled: true,
+      label: progress.atlas?.label ?? ATLAS_LABEL,
       status: ATLAS_STATUS.PORTRAITS,
       characters,
     },
@@ -271,6 +389,7 @@ export function setAtlasCharacterStatus(progress, characterId, status) {
     atlas: {
       ...progress.atlas,
       enabled: true,
+      label: progress.atlas?.label ?? ATLAS_LABEL,
       characters,
     },
   };
@@ -282,6 +401,7 @@ export function setAtlasSkipped(progress, message) {
     storyAtlasEnabled: false,
     atlas: {
       enabled: true,
+      label: progress.atlas?.label ?? ATLAS_LABEL,
       status: ATLAS_STATUS.SKIPPED,
       characters: progress.atlas?.characters ?? [],
     },

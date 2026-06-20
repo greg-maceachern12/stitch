@@ -58,12 +58,17 @@ export const IMAGE_MODEL_COST_USD = {
     estimatedImageOutputTokens: 1056,
     note: "1K medium (~1056 @ $30/M image out) + prompt/ref @ $8/M in",
   },
+  "sourceful/riverflow-v2.5-fast": {
+    kind: "per_image",
+    usd: 0.019,
+    note: "OpenRouter: from $0.019/image (dynamic; scales with reasoning effort and resolution)",
+  },
 };
 
 /** 16:9 at 1K — used for megapixel-based models (Flux). */
 const FLUX_1K_16_9_MEGAPIXELS = (1024 * 576) / 1_000_000;
 
-const DEFAULT_PRICED_MODEL = "x-ai/grok-imagine-image-quality";
+const DEFAULT_PRICED_MODEL = "sourceful/riverflow-v2.5-fast";
 
 export function getImageCostUsd(modelId) {
   const entry =

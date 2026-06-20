@@ -146,6 +146,7 @@ export async function runImagePipeline({
     ])
   );
   const rendered = [];
+  const storyChapterTargetCounts = [];
 
   let progress =
     initialProgress ?? createChapterProgress(bookTitle, storyChapters);
@@ -175,6 +176,10 @@ export async function runImagePipeline({
       order: i,
     });
 
+    if (storyHrefs.has(chapter.href)) {
+      storyChapterTargetCounts.push(sectionArtEnabled ? prepared.targetCount : 1);
+    }
+
     progress = setPreparing(progress, true);
     onProgress?.(progress);
   }
@@ -185,6 +190,10 @@ export async function runImagePipeline({
     ? storyRendered
     : storyRendered.slice(0, MAX_ILLUSTRATED_CHAPTERS);
   progress = setPreparing(progress, false);
+  progress = {
+    ...progress,
+    chapterTargetCounts: storyChapterTargetCounts,
+  };
   onProgress?.(progress);
 
   await mapWithConcurrency(chaptersToIllustrate, concurrency, async (chapter) => {

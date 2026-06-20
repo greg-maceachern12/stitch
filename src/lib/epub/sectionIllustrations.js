@@ -4,7 +4,8 @@ const MIN_PARAGRAPH_CHARS = 120;
 const MIN_HEADING_CHARS = 8;
 const EXCERPT_CHARS = 1200;
 const MAX_SELECTION_CANDIDATES = 48;
-export const WORDS_PER_ILLUSTRATION = 900;
+export const WORDS_PER_ILLUSTRATION = 650;
+export const MIN_SECTION_ILLUSTRATIONS_PER_CHAPTER = 2;
 export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
 
 const CANDIDATE_SELECTOR = "h2, h3, h4, h5, h6, p";
@@ -96,8 +97,15 @@ export function getTargetIllustrationCount(wordCount, candidateCount = Infinity)
   const words = Math.max(0, Number(wordCount) || 0);
   const candidates = Math.max(0, Number(candidateCount) || 0);
   if (candidates <= 0) return 0;
-  const byLength = Math.max(1, Math.round(words / WORDS_PER_ILLUSTRATION));
-  return Math.min(byLength, candidates, MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER);
+  const byLength = Math.max(1, Math.ceil(words / WORDS_PER_ILLUSTRATION));
+  const minimum = candidates >= MIN_SECTION_ILLUSTRATIONS_PER_CHAPTER
+    ? MIN_SECTION_ILLUSTRATIONS_PER_CHAPTER
+    : 1;
+  return Math.min(
+    Math.max(byLength, minimum),
+    candidates,
+    MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER
+  );
 }
 
 export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
@@ -127,10 +135,7 @@ export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
     });
   });
 
-  const wordCount = candidates.reduce(
-    (total, candidate) => total + countWords(candidate.text),
-    0
-  );
+  const wordCount = countWords(template.content.textContent);
 
   const selectionCandidates = [...candidates]
     .sort((a, b) => candidateScore(b) - candidateScore(a))

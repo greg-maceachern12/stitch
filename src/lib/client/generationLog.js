@@ -1,9 +1,10 @@
 import { logInfo } from "@/lib/api/logger";
 import { getImageModel } from "@/lib/imageModels";
 import {
-  getEstimatedSectionIllustrationCount,
+  getEstimatedGenerationImageCount,
   getIllustrationChapterCount,
   MAX_ILLUSTRATED_CHAPTERS,
+  resolveGenerationOptions,
 } from "@/lib/generationProgress";
 import { ILLUSTRATION_MODES } from "@/lib/illustrationModes";
 
@@ -13,20 +14,33 @@ export function logGenerationStart({
   allChapters,
   imageStyle,
   imageModel,
+  illustrationMode,
   useSectionArt,
   proUnlocked,
   fullBookUnlocked,
+  storyAtlasEnabled = false,
   concurrency,
+  chapterTargetCounts = null,
 }) {
   const storyChapterCount = storyChapters.length;
-  const fullBook = Boolean(fullBookUnlocked);
+  const resolved = resolveGenerationOptions({
+    proUnlocked,
+    illustrationMode,
+    fullBookUnlocked,
+    storyAtlasEnabled,
+  });
   const chaptersToIllustrate = getIllustrationChapterCount(
     storyChapterCount,
-    fullBook
+    resolved.fullBookUnlocked
   );
-  const estimatedImages = useSectionArt
-    ? getEstimatedSectionIllustrationCount(storyChapterCount, fullBook)
-    : chaptersToIllustrate;
+  const estimatedImages = getEstimatedGenerationImageCount({
+    proUnlocked,
+    illustrationMode,
+    fullBookUnlocked,
+    storyAtlasEnabled,
+    chapterCount: storyChapterCount,
+    chapterTargetCounts,
+  });
 
   logInfo("Visualize EPUB", {
     title: bookMeta.title,
@@ -38,7 +52,8 @@ export function logGenerationStart({
       : ILLUSTRATION_MODES.CHAPTER_OPENER,
     sectionArt: useSectionArt,
     proUnlocked,
-    fullBook,
+    fullBook: resolved.fullBookUnlocked,
+    storyAtlasEnabled: resolved.storyAtlasEnabled,
     storyChapterCount,
     allChapterCount: allChapters.length,
     chaptersToIllustrate,

@@ -7,9 +7,12 @@ export const DEFAULT_TEXT_MODEL = "google/gemini-3.5-flash";
 
 export { DEFAULT_IMAGE_MODEL };
 
-/** Modalities required by the image model (Grok is image-only; most others also return text). */
+/** Modalities required by the image model (Grok/Sourceful are image-only; most others also return text). */
 export function getImageGenerationModalities(model) {
-  if (model.startsWith("x-ai/grok-imagine")) {
+  if (
+    model.startsWith("x-ai/grok-imagine") ||
+    model.startsWith("sourceful/riverflow")
+  ) {
     return ["image"];
   }
   return ["image", "text"];

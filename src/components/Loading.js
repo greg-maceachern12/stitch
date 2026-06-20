@@ -3,6 +3,7 @@
 import {
   CheckCircle2,
   AlertCircle,
+  BookMarked,
   Circle,
   Loader2,
   Lock,
@@ -10,19 +11,20 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatIllustrationPrice } from "@/lib/imageModelPricing";
-import { isSectionArtMode } from "@/lib/illustrationModes";
+import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import {
   ATLAS_CHARACTER_STATUS,
   ATLAS_STATUS,
   CHAPTER_STATUS,
   STITCH_STATUS,
   PHASES,
+  atlasStatusLabel,
   chapterStatusLabel,
-  getEstimatedSectionIllustrationCount,
-  getIllustrationChapterCount,
+  getEstimatedGenerationImageCount,
   hasLockedChapters,
   isTerminalPhase,
   MAX_ILLUSTRATED_CHAPTERS,
+  resolveGenerationOptions,
   shouldShowProgressPanel,
 } from "@/lib/generationProgress";
 
@@ -77,6 +79,82 @@ function atlasCharacterStatusLabel(status) {
   return "Waiting";
 }
 
+function StoryAtlasListItems({ atlas, phase }) {
+  const isActive =
+    atlas.status === ATLAS_STATUS.PLANNING ||
+    atlas.status === ATLAS_STATUS.PORTRAITS;
+  const isReady =
+    phase === PHASES.READY && atlas.status === ATLAS_STATUS.PENDING;
+  const characters = atlas.characters ?? [];
+
+  return (
+    <>
+      <li
+        className={`flex items-start gap-3 rounded-md border px-2 py-2 text-sm transition-colors ${
+          isActive
+            ? "border-[var(--pro-blue)]/35 bg-[var(--pro-blue)]/[0.05] ring-1 ring-[var(--pro-blue)]/15"
+            : "border-[var(--pro-border)]"
+        }`}
+        style={
+          isActive ? undefined : { background: "var(--pro-gradient-soft)" }
+        }
+      >
+        <BookMarked
+          className="h-4 w-4 shrink-0 text-[var(--pro-blue)]"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <p
+              className={`font-display truncate ${
+                isReady ? "text-muted" : "text-[var(--pro-navy)]"
+              }`}
+            >
+              {atlas.label ?? "Story Atlas"}
+            </p>
+            <span className="shrink-0 rounded-full border border-[var(--pro-blue)]/25 bg-[var(--pro-blue)]/5 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--pro-blue)]">
+              Pro
+            </span>
+          </div>
+          <p className="text-xs text-muted">
+            {atlasStatusLabel(atlas.status, phase)}
+          </p>
+        </div>
+      </li>
+
+      {characters.map((character) => {
+        const isCharacterActive =
+          character.status === ATLAS_CHARACTER_STATUS.IMAGE;
+        return (
+          <li
+            key={character.id}
+            className={`flex items-start gap-3 rounded-md py-2 pl-9 pr-2 text-sm transition-colors ${
+              isCharacterActive ? "bg-[var(--pro-blue)]/[0.06]" : ""
+            }`}
+          >
+            <StatusIcon status={character.status} />
+            <div className="min-w-0 flex-1">
+              <p
+                className={`font-display truncate ${
+                  character.status === ATLAS_CHARACTER_STATUS.PENDING
+                    ? "text-muted"
+                    : "text-foreground"
+                }`}
+              >
+                {character.name}
+              </p>
+              <p className="text-xs text-muted">
+                {atlasCharacterStatusLabel(character.status)}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </>
+  );
+}
+
 function ChapterLimitBanner({ onOpenPro }) {
   return (
     <p
@@ -125,6 +203,9 @@ const Loading = ({
   progress,
   imageModel,
   illustrationMode,
+  proUnlocked = false,
+  fullBookUnlocked = false,
+  storyAtlasEnabled = false,
   onOpenPro,
 }) => {
   if (!shouldShowProgressPanel(progress, isLoading || isParsing)) return null;
@@ -138,32 +219,40 @@ const Loading = ({
     stitching,
     atlas,
     isPreparing,
-    fullBookUnlocked,
-    sectionArtEnabled: progressSectionArt,
+    chapterTargetCounts,
   } = progress;
-  const sectionArtEnabled =
-    progressSectionArt ?? isSectionArtMode(illustrationMode);
+  const { sectionArtEnabled, fullBookUnlocked: effectiveFullBook } =
+    resolveGenerationOptions({
+      proUnlocked,
+      illustrationMode,
+      fullBookUnlocked,
+      storyAtlasEnabled,
+    });
+  const pricedImageModel = getImageModel(
+    proUnlocked ? imageModel : DEFAULT_IMAGE_MODEL
+  ).id;
   const isError = phase === PHASES.ERROR;
   const isComplete = phase === PHASES.COMPLETE;
   const isReady = phase === PHASES.READY;
   const showChapterList = chapters.length > 0 && !isError;
-  const showAtlasList =
-    atlas?.enabled &&
-    atlas.characters?.length > 0 &&
-    (phase === PHASES.ATLAS || atlas.status === ATLAS_STATUS.PORTRAITS);
+  const showAtlasRow = atlas?.enabled && showChapterList;
   const showChapterLimitBanner =
     showChapterList && hasLockedChapters(chapters);
   const showPercentBar = !isError && !isReady && phase !== PHASES.PARSING;
   const illustrationPrice =
-    showChapterList && imageModel
+    showChapterList
       ? formatIllustrationPrice(
-          imageModel,
-          sectionArtEnabled
-            ? getEstimatedSectionIllustrationCount(
-                chapters.length,
-                fullBookUnlocked
-              )
-            : getIllustrationChapterCount(chapters.length, fullBookUnlocked)
+          pricedImageModel,
+          getEstimatedGenerationImageCount({
+            proUnlocked,
+            illustrationMode,
+            fullBookUnlocked,
+            storyAtlasEnabled,
+            chapterCount: chapters.length,
+            chapterTargetCounts,
+            atlasCharacterCount:
+              atlas?.characters?.length > 0 ? atlas.characters.length : null,
+          })
         )
       : null;
 
@@ -199,44 +288,15 @@ const Loading = ({
         </div>
       )}
 
-      {showAtlasList && (
-        <ol className="max-h-48 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-surface/50 p-2">
-          {atlas.characters.map((character) => {
-            const isActive = character.status === ATLAS_CHARACTER_STATUS.IMAGE;
-            return (
-              <li
-                key={character.id}
-                className={`flex items-start gap-3 rounded-md px-2 py-2 text-sm transition-colors ${
-                  isActive ? "bg-accent/8" : ""
-                }`}
-              >
-                <StatusIcon status={character.status} />
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={`font-display truncate ${
-                      character.status === ATLAS_CHARACTER_STATUS.PENDING
-                        ? "text-muted"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {character.name}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {atlasCharacterStatusLabel(character.status)}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
       {showChapterList && (
         <div className="space-y-2">
           {showChapterLimitBanner && (
             <ChapterLimitBanner onOpenPro={onOpenPro} />
           )}
           <ol className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-border bg-surface/50 p-2">
+          {showAtlasRow && (
+            <StoryAtlasListItems atlas={atlas} phase={phase} />
+          )}
           {isPreparing && (
             <li className="flex items-center gap-3 rounded-md px-2 py-2 text-sm text-muted">
               <Loader2
@@ -303,7 +363,7 @@ const Loading = ({
                       ? "EPUB assembled and download started"
                       : stitching.status === STITCH_STATUS.ACTIVE
                         ? "Assembling EPUB and packaging download"
-                        : fullBookUnlocked
+                        : effectiveFullBook
                           ? sectionArtEnabled
                             ? "Runs after all section art is placed"
                             : "Runs after all chapter art is placed"

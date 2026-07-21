@@ -2,13 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, Lock, Sparkles, X } from "lucide-react";
+import { ChevronDown, KeyRound, Lock, Sparkles, X } from "lucide-react";
 import { DEFAULT_IMAGE_STYLE, IMAGE_STYLE_OPTIONS } from "@/lib/imageStyles";
 import {
   DEFAULT_IMAGE_MODEL,
   IMAGE_MODEL_OPTIONS,
 } from "@/lib/imageModels";
 import { isSectionArtMode, ILLUSTRATION_MODES } from "@/lib/illustrationModes";
+import {
+  getStoredOpenRouterApiKey,
+  setStoredOpenRouterApiKey,
+} from "@/lib/client/openRouterApiKey";
 
 function SectionLabel({ children, trailing }) {
   return (
@@ -323,6 +327,69 @@ function UnlockedPill() {
   );
 }
 
+function OpenRouterKeyField({
+  disabled,
+  onUnlockWithKey,
+  onClearKeyUnlock,
+}) {
+  const [apiKey, setApiKey] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setApiKey(getStoredOpenRouterApiKey());
+    setHydrated(true);
+  }, []);
+
+  const persist = (value) => {
+    setApiKey(value);
+    setStoredOpenRouterApiKey(value);
+    if (value.trim()) {
+      onUnlockWithKey?.();
+    } else {
+      onClearKeyUnlock?.();
+    }
+  };
+
+  const hasKey = Boolean(apiKey.trim());
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 rounded-md border border-border bg-surface pl-2.5 pr-1 py-1 transition-colors focus-within:border-foreground/25">
+        <KeyRound
+          className="h-3.5 w-3.5 shrink-0 text-muted"
+          aria-hidden
+          strokeWidth={2}
+        />
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(event) => persist(event.target.value)}
+          placeholder={hydrated ? "sk-or-…" : "Loading…"}
+          disabled={disabled || !hydrated}
+          autoComplete="off"
+          spellCheck={false}
+          className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] text-foreground placeholder:text-muted/70 focus:outline-none disabled:opacity-50"
+          aria-label="OpenRouter API key"
+        />
+        {hasKey ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => persist("")}
+            className="shrink-0 rounded-[5px] px-2 py-1 text-[11px] font-medium text-muted transition-colors hover:bg-hover-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+      <p className="px-0.5 text-[11px] leading-snug text-muted">
+        Unlocks Pro and bills your OpenRouter account. Stored only in this
+        browser.
+      </p>
+    </div>
+  );
+}
+
 export default function OptionsPill({
   imageStyle = DEFAULT_IMAGE_STYLE,
   onImageStyleChange,
@@ -332,6 +399,8 @@ export default function OptionsPill({
   onIllustrationModeChange,
   proUnlocked = false,
   onProUnlock,
+  onProUnlockWithOpenRouterKey,
+  onClearOpenRouterKeyUnlock,
   proUnlockError,
   onClearProUnlockError,
   fullBookUnlocked = false,
@@ -408,13 +477,33 @@ export default function OptionsPill({
           </SectionLabel>
 
           {!proUnlocked ? (
-            <UnlockForm
+            <div className="space-y-3">
+              <UnlockForm
+                disabled={disabled}
+                onProUnlock={onProUnlock}
+                onClearProUnlockError={onClearProUnlockError}
+                proUnlockError={proUnlockError}
+              />
+              <div className="flex items-center gap-2 px-0.5">
+                <span className="h-px flex-1 bg-border" aria-hidden />
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted/80">
+                  or
+                </span>
+                <span className="h-px flex-1 bg-border" aria-hidden />
+              </div>
+              <OpenRouterKeyField
+                disabled={disabled}
+                onUnlockWithKey={onProUnlockWithOpenRouterKey}
+                onClearKeyUnlock={onClearOpenRouterKeyUnlock}
+              />
+            </div>
+          ) : (
+            <OpenRouterKeyField
               disabled={disabled}
-              onProUnlock={onProUnlock}
-              onClearProUnlockError={onClearProUnlockError}
-              proUnlockError={proUnlockError}
+              onUnlockWithKey={onProUnlockWithOpenRouterKey}
+              onClearKeyUnlock={onClearOpenRouterKeyUnlock}
             />
-          ) : null}
+          )}
 
           <div className="space-y-1.5">
             <span className="font-display-semibold block text-[10px] uppercase tracking-[0.14em] text-muted/75">

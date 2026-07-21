@@ -1,10 +1,12 @@
 import { logApiCall, summarizePayload } from "@/lib/api/logger";
+import { getStoredOpenRouterApiKey } from "@/lib/client/openRouterApiKey";
 import { getImageModel } from "@/lib/imageModels";
 
 const GENERATE_PROMPT_API = "/api/generate-prompt";
 const GENERATE_IMAGE_API = "/api/generate-image";
 const SELECT_ILLUSTRATION_SECTIONS_API = "/api/select-illustration-sections";
 const GENERATE_STORY_ATLAS_PLAN_API = "/api/generate-story-atlas-plan";
+const OPENROUTER_API_KEY_HEADER = "x-openrouter-api-key";
 
 function routeLabel(url) {
   try {
@@ -19,9 +21,15 @@ async function postJson(url, body) {
     request: summarizePayload(body),
   });
 
+  const openRouterApiKey = getStoredOpenRouterApiKey();
+  const headers = { "Content-Type": "application/json" };
+  if (openRouterApiKey) {
+    headers[OPENROUTER_API_KEY_HEADER] = openRouterApiKey;
+  }
+
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 

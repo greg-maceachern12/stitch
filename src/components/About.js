@@ -10,7 +10,7 @@ function About() {
       <article className="w-full">
         <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <h1 className="text-4xl text-foreground">About Visuai</h1>
-          <Link href="/" className="btn-ghost shrink-0 self-start">
+          <Link href="/app" className="btn-ghost shrink-0 self-start">
             <ArrowLeft className="h-4 w-4" />
             Back to app
           </Link>

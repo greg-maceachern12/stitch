@@ -85,6 +85,8 @@ export default function AppShell() {
             onIllustrationModeChange={epubWorkflow.setIllustrationMode}
             proUnlocked={epubWorkflow.proUnlocked}
             onProUnlock={epubWorkflow.unlockPro}
+            onProUnlockWithOpenRouterKey={epubWorkflow.unlockProWithOpenRouterKey}
+            onClearOpenRouterKeyUnlock={epubWorkflow.clearOpenRouterKeyUnlock}
             proUnlockError={epubWorkflow.proUnlockError}
             onClearProUnlockError={epubWorkflow.clearProUnlockError}
             fullBookUnlocked={epubWorkflow.fullBookUnlocked}

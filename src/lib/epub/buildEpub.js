@@ -1,6 +1,9 @@
 import JSZip from "jszip";
 import { atlasPortraitPath } from "@/lib/storyAtlas/atlasPaths";
-import { fetchImageAsArrayBuffer } from "./assets";
+import {
+  fetchImageForEpub,
+  prepareCoverImageForEpub,
+} from "./assets";
 import { buildChapterXhtml, escapeXml } from "./xhtml";
 import { insertIllustrationsIntoHtml } from "./sectionIllustrations";
 
@@ -226,15 +229,15 @@ function addStyles(oebps, manifestItems) {
   );
 }
 
-function addCover(oebps, cover, manifestItems, spineItems) {
+async function addCover(oebps, cover, manifestItems, spineItems) {
   if (!cover?.startsWith("data:")) {
     return;
   }
 
-  const base64 = cover.split(",")[1];
   const coverImagePath = "images/cover.jpg";
+  const imageBuffer = await prepareCoverImageForEpub(cover);
 
-  oebps.file(coverImagePath, base64, { base64: true });
+  oebps.file(coverImagePath, imageBuffer);
   manifestItems.push(
     `<item id="cover-image" href="${coverImagePath}" media-type="image/jpeg" properties="cover-image"/>`
   );
@@ -266,7 +269,7 @@ async function loadStoryAtlasAssets(storyAtlas) {
         return {
           id: character.id,
           imagePath: atlasPortraitPath(character.id),
-          imageBuffer: await fetchImageAsArrayBuffer(character.imageUrl),
+          imageBuffer: await fetchImageForEpub(character.imageUrl),
         };
       } catch (error) {
         console.error(`Skipping atlas portrait for ${character.id}:`, error);
@@ -305,7 +308,7 @@ function addStoryAtlas(oebps, atlasAssets, manifestItems, spineItems, navPoints)
 
 async function loadChapterAssets(chapter, index) {
   const openerPromise = chapter.imageUrl
-    ? fetchImageAsArrayBuffer(chapter.imageUrl)
+    ? fetchImageForEpub(chapter.imageUrl)
         .then((imageBuffer) => ({
           imagePath: openerImageFileName(index),
           imageBuffer,
@@ -323,7 +326,7 @@ async function loadChapterAssets(chapter, index) {
       try {
         return {
           illustration,
-          imageBuffer: await fetchImageAsArrayBuffer(illustration.imageUrl),
+          imageBuffer: await fetchImageForEpub(illustration.imageUrl),
         };
       } catch (error) {
         console.error(
@@ -445,7 +448,7 @@ export async function buildEpub({ title, author, cover, storyAtlas, chapters }) 
 
   const oebps = zip.folder("OEBPS");
   addStyles(oebps, manifestItems);
-  addCover(oebps, cover, manifestItems, spineItems);
+  await addCover(oebps, cover, manifestItems, spineItems);
 
   const atlasAssets = await loadStoryAtlasAssets(storyAtlas);
   addStoryAtlas(oebps, atlasAssets, manifestItems, spineItems, navPoints);

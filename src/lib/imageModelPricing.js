@@ -43,12 +43,9 @@ export const IMAGE_MODEL_COST_USD = {
     note: "OpenRouter: $0.014 for the first output megapixel at 1K",
   },
   "google/gemini-3.1-flash-image-preview": {
-    kind: "per_tokens",
-    inputUsdPerM: 0.5,
-    imageOutputUsdPerM: 60,
-    estimatedInputTokens: 1620,
-    estimatedImageOutputTokens: 1056,
-    note: "Default 1K (~1056 @ $60/M image out) + prompt/ref @ $0.50/M in",
+    kind: "per_image",
+    usd: 0.068,
+    note: "OpenRouter: ~$0.068/image (Nano Banana)",
   },
   "openai/gpt-5.4-image-2": {
     kind: "per_tokens",
@@ -62,6 +59,11 @@ export const IMAGE_MODEL_COST_USD = {
     kind: "per_image",
     usd: 0.019,
     note: "OpenRouter: from $0.019/image (dynamic; scales with reasoning effort and resolution)",
+  },
+  "krea/krea-2-large": {
+    kind: "per_image",
+    usd: 0.06,
+    note: "OpenRouter: from $0.06/image",
   },
 };
 

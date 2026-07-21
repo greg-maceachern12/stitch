@@ -12,6 +12,7 @@ import {
   Info,
   Loader2,
   BookOpen,
+  ArrowRight,
 } from "lucide-react";
 
 const EBOOKS_URL = "https://www.ebooks.com";
@@ -163,6 +164,13 @@ const Navbar = () => {
                 <Mail className="h-4 w-4" />
                 <span>Issues?</span>
               </button>
+              <Link
+                href="/app"
+                className="ml-1 inline-flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+              >
+                Open app
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
             </div>
 
             <button
@@ -218,6 +226,16 @@ const Navbar = () => {
                   Issues?
                 </span>
               </button>
+              <Link
+                href="/app"
+                className="btn-primary mt-2 block text-center"
+                onClick={closeMenu}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  Open app
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </span>
+              </Link>
             </div>
           </div>
         )}

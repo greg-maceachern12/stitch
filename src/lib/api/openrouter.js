@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { OpenRouter } from "@openrouter/sdk";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
@@ -7,10 +8,26 @@ export const DEFAULT_TEXT_MODEL = "google/gemini-3.5-flash";
 
 export { DEFAULT_IMAGE_MODEL };
 
-/** Modalities required by the image model (Grok/Sourceful are image-only; most others also return text). */
+/** Request-scoped OpenRouter key from the client (BYOK). */
+const openRouterApiKeyStore = new AsyncLocalStorage();
+
+export function normalizeOpenRouterApiKey(value) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+/** Run an API handler with an optional per-request OpenRouter API key. */
+export function runWithOpenRouterApiKey(apiKey, fn) {
+  return openRouterApiKeyStore.run(normalizeOpenRouterApiKey(apiKey), fn);
+}
+
+/** Modalities required by the image model (Grok/Seedream/Krea/Sourceful are image-only; most others also return text). */
 export function getImageGenerationModalities(model) {
   if (
     model.startsWith("x-ai/grok-imagine") ||
+    model.startsWith("bytedance-seed/seedream") ||
+    model.startsWith("krea/") ||
     model.startsWith("sourceful/riverflow")
   ) {
     return ["image"];
@@ -37,10 +54,11 @@ export function getOpenRouterImageModel(requestedModel) {
 }
 
 export function requireOpenRouterClient(routeLabel) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey =
+    openRouterApiKeyStore.getStore() || process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new ApiError(
-      `${routeLabel} not configured. Add OPENROUTER_API_KEY to .env.local or set API_USE_MOCKS=true.`,
+      `${routeLabel} not configured. Add an OpenRouter API key in Options, or set OPENROUTER_API_KEY in .env.local.`,
       501
     );
   }

@@ -19,6 +19,8 @@ export function summarizePayload(payload) {
   const summary = { ...payload };
   if (summary.prompt) summary.prompt = truncate(summary.prompt);
   if (summary.response) summary.response = truncate(summary.response);
+  if (summary.openRouterApiKey) summary.openRouterApiKey = "[redacted]";
+  if (summary.apiKey) summary.apiKey = "[redacted]";
   return summary;
 }
 

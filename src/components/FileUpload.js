@@ -23,6 +23,8 @@ const FileUpload = ({
   onIllustrationModeChange,
   proUnlocked,
   onProUnlock,
+  onProUnlockWithOpenRouterKey,
+  onClearOpenRouterKeyUnlock,
   proUnlockError,
   onClearProUnlockError,
   fullBookUnlocked,
@@ -67,6 +69,8 @@ const FileUpload = ({
             onIllustrationModeChange={onIllustrationModeChange}
             proUnlocked={proUnlocked}
             onProUnlock={onProUnlock}
+            onProUnlockWithOpenRouterKey={onProUnlockWithOpenRouterKey}
+            onClearOpenRouterKeyUnlock={onClearOpenRouterKeyUnlock}
             proUnlockError={proUnlockError}
             onClearProUnlockError={onClearProUnlockError}
             fullBookUnlocked={fullBookUnlocked}

@@ -54,7 +54,7 @@ export default async function ProFeaturePage({ params }) {
               <h1 className="text-4xl text-foreground">{feature.title}</h1>
             </div>
           </div>
-          <Link href="/" className="btn-ghost shrink-0 self-start">
+          <Link href="/app" className="btn-ghost shrink-0 self-start">
             <ArrowLeft className="h-4 w-4" />
             Back to app
           </Link>

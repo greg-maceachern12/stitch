@@ -471,9 +471,61 @@
     .pro-gradient-ring::before,
     .pro-gradient-ring--animate-in,
     .pro-gradient-ring--animate-in .pro-gradient-ring-inner,
-    .visuai-pro-access-form {
+    .visuai-pro-access-form,
+    .home-reveal {
       animation: none;
       transition: none;
     }
+
+    .home-reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .home-reveal {
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .home-reveal--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .home-hero-image {
+    animation: home-hero-image-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .home-hero-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(251, 251, 249, 0.72) 0%,
+      rgba(251, 251, 249, 0.88) 45%,
+      var(--background) 100%
+    );
+  }
+
+  @keyframes home-hero-image-in {
+    from {
+      opacity: 0;
+      transform: scale(1.04);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .home-flow {
+    scroll-margin-top: 4rem;
+  }
+
+  .home-flow-title {
+    text-wrap: balance;
   }
 }

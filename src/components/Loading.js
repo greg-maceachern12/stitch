@@ -20,7 +20,9 @@ import {
   PHASES,
   atlasStatusLabel,
   chapterStatusLabel,
+  formatEstimatedTimeRemaining,
   getEstimatedGenerationImageCount,
+  getRemainingGenerationImageCount,
   hasLockedChapters,
   isTerminalPhase,
   MAX_ILLUSTRATED_CHAPTERS,
@@ -197,6 +199,17 @@ function IllustrationCost({ price }) {
   );
 }
 
+function TimeRemaining({ label, value }) {
+  if (!value) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-3 px-0.5">
+      <span className="font-display text-xs text-muted">{label}</span>
+      <span className="shrink-0 text-xs tabular-nums text-foreground">{value}</span>
+    </div>
+  );
+}
+
 const Loading = ({
   isLoading,
   isParsing,
@@ -255,6 +268,17 @@ const Loading = ({
           })
         )
       : null;
+  const remainingImages =
+    showChapterList && !isError && !isComplete
+      ? getRemainingGenerationImageCount(progress, {
+          proUnlocked,
+          illustrationMode,
+          fullBookUnlocked,
+          storyAtlasEnabled,
+        })
+      : 0;
+  const timeRemainingLabel = formatEstimatedTimeRemaining(remainingImages);
+  const timeRemainingTitle = isReady ? "Est. time" : "Time remaining";
 
   return (
     <div
@@ -286,6 +310,10 @@ const Loading = ({
             style={{ width: `${percent}%` }}
           />
         </div>
+      )}
+
+      {timeRemainingLabel && (
+        <TimeRemaining label={timeRemainingTitle} value={timeRemainingLabel} />
       )}
 
       {showChapterList && (

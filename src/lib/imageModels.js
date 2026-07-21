@@ -29,6 +29,10 @@ export const IMAGE_MODELS = {
     label: "Riverflow 2.5",
     logoUrl: "/model-logos/sourceful.png",
   },
+  "krea/krea-2-large": {
+    label: "Krea 2 Large",
+    logoUrl: "/model-logos/krea.png",
+  },
 };
 
 export const IMAGE_MODEL_OPTIONS = Object.entries(IMAGE_MODELS).map(

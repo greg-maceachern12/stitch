@@ -1,5 +1,8 @@
 import { ApiError, jsonError } from "./errors";
 import { logApiCall, summarizePayload } from "./logger";
+import { runWithOpenRouterApiKey } from "./openrouter";
+
+const OPENROUTER_API_KEY_HEADER = "x-openrouter-api-key";
 
 export async function handlePost(request, handler, routeLabel) {
   const label = routeLabel || "POST (unknown route)";
@@ -7,9 +10,16 @@ export async function handlePost(request, handler, routeLabel) {
 
   try {
     const body = await request.json();
-    const result = await handler(body);
+    const userApiKey = request.headers.get(OPENROUTER_API_KEY_HEADER);
+    const result = await runWithOpenRouterApiKey(userApiKey, () =>
+      handler(body)
+    );
     const status = result instanceof Response ? result.status : 200;
-    log.finish({ request: summarizePayload(body), status });
+    log.finish({
+      request: summarizePayload(body),
+      status,
+      usingUserApiKey: Boolean(userApiKey?.trim()),
+    });
     return result;
   } catch (error) {
     if (error instanceof ApiError) {

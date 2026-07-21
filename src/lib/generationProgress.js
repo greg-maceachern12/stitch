@@ -206,6 +206,121 @@ export function getEstimatedGenerationImageCount({
   return illustrationImages + atlasImages;
 }
 
+/** Assumed wall-clock cost of one image generation call. */
+export const MS_PER_IMAGE = 9000;
+
+const FINISHED_CHAPTER_STATUSES = new Set([
+  CHAPTER_STATUS.DONE,
+  CHAPTER_STATUS.SKIPPED,
+  CHAPTER_STATUS.ERROR,
+  CHAPTER_STATUS.LOCKED,
+]);
+
+const REMAINING_ATLAS_CHARACTER_STATUSES = new Set([
+  ATLAS_CHARACTER_STATUS.PENDING,
+  ATLAS_CHARACTER_STATUS.IMAGE,
+]);
+
+function chapterImageCountAtIndex(
+  index,
+  sectionArtEnabled,
+  chapterTargetCounts
+) {
+  if (!sectionArtEnabled) return 1;
+  if (Array.isArray(chapterTargetCounts) && chapterTargetCounts.length > 0) {
+    return Math.max(0, Number(chapterTargetCounts[index]) || 0);
+  }
+  return MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER;
+}
+
+/**
+ * Images still left to generate from live progress (atlas portraits + chapter art).
+ * Finished / locked / skipped work is excluded; in-flight images still count.
+ */
+export function getRemainingGenerationImageCount(
+  progress,
+  {
+    proUnlocked = false,
+    illustrationMode,
+    fullBookUnlocked = false,
+    storyAtlasEnabled = false,
+  } = {}
+) {
+  if (!progress) return 0;
+
+  const resolved = resolveGenerationOptions({
+    proUnlocked,
+    illustrationMode,
+    fullBookUnlocked:
+      fullBookUnlocked || Boolean(progress.fullBookUnlocked),
+    storyAtlasEnabled:
+      storyAtlasEnabled || Boolean(progress.storyAtlasEnabled),
+  });
+
+  const sectionArtEnabled =
+    progress.sectionArtEnabled ?? resolved.sectionArtEnabled;
+  const chapterTargetCounts = progress.chapterTargetCounts ?? null;
+  const chapters = progress.chapters ?? [];
+
+  let remaining = 0;
+
+  const atlas = progress.atlas;
+  const atlasActive =
+    resolved.storyAtlasEnabled &&
+    atlas?.enabled &&
+    atlas.status !== ATLAS_STATUS.SKIPPED &&
+    atlas.status !== ATLAS_STATUS.DONE &&
+    atlas.status !== ATLAS_STATUS.ERROR;
+
+  if (atlasActive) {
+    const characters = atlas.characters ?? [];
+    if (characters.length > 0) {
+      remaining += characters.filter((character) =>
+        REMAINING_ATLAS_CHARACTER_STATUSES.has(character.status)
+      ).length;
+    } else {
+      remaining += getEstimatedAtlasPortraitCount(true, null);
+    }
+  }
+
+  for (let i = 0; i < chapters.length; i++) {
+    const chapter = chapters[i];
+    if (FINISHED_CHAPTER_STATUSES.has(chapter.status)) continue;
+    remaining += chapterImageCountAtIndex(
+      i,
+      sectionArtEnabled,
+      chapterTargetCounts
+    );
+  }
+
+  return remaining;
+}
+
+export function getEstimatedTimeRemainingMs(remainingImages) {
+  return Math.max(0, Number(remainingImages) || 0) * MS_PER_IMAGE;
+}
+
+/** Human-readable ETA, e.g. "~45s", "~3 min", "~1h 10m". */
+export function formatEstimatedTimeRemaining(remainingImages) {
+  const ms = getEstimatedTimeRemainingMs(remainingImages);
+  if (ms <= 0) return null;
+
+  const seconds = Math.max(1, Math.round(ms / 1000));
+  if (seconds < 60) return `~${seconds}s`;
+
+  const minutes = Math.floor(seconds / 60);
+  const remSeconds = seconds % 60;
+  if (minutes < 60) {
+    if (remSeconds === 0) return `~${minutes} min`;
+    if (minutes < 10) return `~${minutes}m ${remSeconds}s`;
+    return `~${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remMinutes = minutes % 60;
+  return remMinutes === 0 ? `~${hours} hr` : `~${hours}h ${remMinutes}m`;
+}
+
 export function hasLockedChapters(chapters = []) {
   return chapters.some((chapter) => chapter.status === CHAPTER_STATUS.LOCKED);
 }

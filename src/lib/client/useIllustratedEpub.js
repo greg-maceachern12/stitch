@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { DEFAULT_IMAGE_STYLE } from "@/lib/imageStyles";
 import {
@@ -23,6 +23,7 @@ import {
   withReadyPlacement,
 } from "@/lib/generationProgress";
 import { isFullBookPasscodeValid } from "@/lib/fullBookUnlock";
+import { getStoredOpenRouterApiKey } from "@/lib/client/openRouterApiKey";
 import { downloadEpubBlob } from "@/lib/client/downloads";
 import { fetchBlobAndConvertToBase64 } from "@/lib/epub/assets";
 import { buildEpub } from "@/lib/epub/buildEpub";
@@ -41,6 +42,10 @@ import { runStoryAtlasPipeline } from "@/lib/storyAtlas/atlasPipeline";
 
 const FALLBACK_COVER = "https://i.imgur.com/c4VGri2.jpeg";
 const PIPELINE_CONCURRENCY = 4;
+const UNLOCK_SOURCE = {
+  PASSCODE: "passcode",
+  API_KEY: "apiKey",
+};
 
 function isEpubFile(file) {
   return file?.type === "application/epub+zip";
@@ -129,6 +134,7 @@ export function useIllustratedEpub() {
   const [proUnlockError, setProUnlockError] = useState("");
   const [fullBookUnlocked, setFullBookUnlocked] = useState(false);
   const [storyAtlasEnabled, setStoryAtlasEnabled] = useState(false);
+  const unlockSourceRef = useRef(null);
   const setIllustrationMode = (mode) => {
     const resolved = getIllustrationMode(mode);
     if (resolved === ILLUSTRATION_MODES.SECTION_ART && !proUnlocked) {
@@ -145,6 +151,13 @@ export function useIllustratedEpub() {
   };
   const parsedBookRef = useRef(null);
   const parseGenerationRef = useRef(0);
+
+  useEffect(() => {
+    if (getStoredOpenRouterApiKey()) {
+      unlockSourceRef.current = UNLOCK_SOURCE.API_KEY;
+      setProUnlocked(true);
+    }
+  }, []);
 
   function clearParsedBook() {
     parsedBookRef.current = null;
@@ -227,10 +240,58 @@ export function useIllustratedEpub() {
       return false;
     }
 
+    unlockSourceRef.current = UNLOCK_SOURCE.PASSCODE;
     setProUnlocked(true);
     setProUnlockError("");
     setIllustrationModeState(DEFAULT_ILLUSTRATION_MODE);
     return true;
+  }
+
+  function unlockProWithOpenRouterKey() {
+    if (unlockSourceRef.current !== UNLOCK_SOURCE.PASSCODE) {
+      unlockSourceRef.current = UNLOCK_SOURCE.API_KEY;
+    }
+    setProUnlocked(true);
+    setProUnlockError("");
+    return true;
+  }
+
+  function clearOpenRouterKeyUnlock() {
+    if (unlockSourceRef.current !== UNLOCK_SOURCE.API_KEY) {
+      return;
+    }
+
+    unlockSourceRef.current = null;
+    setProUnlocked(false);
+    setProUnlockError("");
+    setFullBookUnlocked(false);
+    setStoryAtlasEnabled(false);
+    setIllustrationModeState(DEFAULT_ILLUSTRATION_MODE);
+    setImageModelState(DEFAULT_IMAGE_MODEL);
+
+    if (bookPreview) {
+      setBookPreview({
+        ...bookPreview,
+        fullBookUnlocked: false,
+        illustratedChapterCount: Math.min(
+          MAX_ILLUSTRATED_CHAPTERS,
+          bookPreview.chapterCount
+        ),
+      });
+    }
+
+    if (progress?.phase === PHASES.READY && parsedBookRef.current?.storyChapters) {
+      setProgress(
+        createReadyProgress(
+          bookPreview?.title ?? progress.bookTitle,
+          parsedBookRef.current.storyChapters,
+          false,
+          false,
+          false,
+          parsedBookRef.current.chapterTargetCounts
+        )
+      );
+    }
   }
 
   function setFullBookEnabled(enabled) {
@@ -284,7 +345,10 @@ export function useIllustratedEpub() {
     setEpubFile(null);
     setFileError("");
     setIsParsing(false);
-    setProUnlocked(false);
+    unlockSourceRef.current = getStoredOpenRouterApiKey()
+      ? UNLOCK_SOURCE.API_KEY
+      : null;
+    setProUnlocked(Boolean(unlockSourceRef.current));
     setProUnlockError("");
     setFullBookUnlocked(false);
     setStoryAtlasEnabled(false);
@@ -461,6 +525,8 @@ export function useIllustratedEpub() {
     proUnlocked,
     proUnlockError,
     unlockPro,
+    unlockProWithOpenRouterKey,
+    clearOpenRouterKeyUnlock,
     clearProUnlockError: () => setProUnlockError(""),
     fullBookUnlocked,
     setFullBookEnabled,

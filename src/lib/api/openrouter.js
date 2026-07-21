@@ -3,8 +3,11 @@ import { OpenRouter } from "@openrouter/sdk";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
 
-/** Gemini chat model for prompt / text generation */
-export const DEFAULT_TEXT_MODEL = "google/gemini-3.5-flash";
+/** Gemini chat model for prompt generation (lighter / cheaper). */
+export const PROMPT_GENERATION_MODEL = "google/gemini-3.5-flash-lite";
+
+/** Gemini chat model for Story Atlas and section art selection. */
+export const ATLAS_SECTION_TEXT_MODEL = "google/gemini-3.6-flash";
 
 export { DEFAULT_IMAGE_MODEL };
 
@@ -36,17 +39,17 @@ export function getImageGenerationModalities(model) {
 }
 
 export function getOpenRouterTextModel() {
-  return process.env.OPENROUTER_MODEL || DEFAULT_TEXT_MODEL;
+  return process.env.OPENROUTER_MODEL || PROMPT_GENERATION_MODEL;
 }
 
-/** Story Atlas plan generation — always Gemini 3.5 Flash (not OPENROUTER_MODEL). */
+/** Story Atlas plan generation — always Gemini 3.6 Flash (not OPENROUTER_MODEL). */
 export function getStoryAtlasTextModel() {
-  return DEFAULT_TEXT_MODEL;
+  return ATLAS_SECTION_TEXT_MODEL;
 }
 
-/** Section art selection — always Gemini 3.5 Flash (1M context, not OPENROUTER_MODEL). */
+/** Section art selection — always Gemini 3.6 Flash (1M context, not OPENROUTER_MODEL). */
 export function getSectionSelectionModel() {
-  return DEFAULT_TEXT_MODEL;
+  return ATLAS_SECTION_TEXT_MODEL;
 }
 
 export function getOpenRouterImageModel(requestedModel) {

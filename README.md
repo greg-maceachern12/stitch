@@ -45,7 +45,7 @@ Copy `.env.example` to `.env.local` and add at least `OPENROUTER_API_KEY` for re
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
-OPENROUTER_MODEL=google/gemini-3.5-flash
+OPENROUTER_MODEL=google/gemini-3.5-flash-lite
 
 API_USE_MOCKS=false
 ```

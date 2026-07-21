@@ -4,9 +4,9 @@ const MIN_PARAGRAPH_CHARS = 120;
 const MIN_HEADING_CHARS = 8;
 const EXCERPT_CHARS = 1200;
 const MAX_SELECTION_CANDIDATES = 48;
-export const WORDS_PER_ILLUSTRATION = 650;
-export const MIN_SECTION_ILLUSTRATIONS_PER_CHAPTER = 2;
-export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 6;
+export const WORDS_PER_ILLUSTRATION = 1000;
+export const MIN_SECTION_ILLUSTRATIONS_PER_CHAPTER = 1;
+export const MAX_SECTION_ILLUSTRATIONS_PER_CHAPTER = 4;
 
 const CANDIDATE_SELECTOR = "h2, h3, h4, h5, h6, p";
 const SKIP_TEXT_PATTERNS = [
@@ -223,9 +223,40 @@ function buildIllustrationFigureHtml(illustration, src) {
 }
 
 /**
+ * Find the index just after the full HTML element that carries the given
+ * data-visuai-anchor, so illustrations can be placed below the passage.
+ * Returns -1 when the anchor or a matching close tag cannot be found.
+ */
+function findInsertIndexAfterAnchoredElement(html, anchorId) {
+  const openPattern = new RegExp(
+    `<([a-z][a-z0-9]*)\\b[^>]*\\bdata-visuai-anchor="${escapeRegExp(anchorId)}"[^>]*>`,
+    "i"
+  );
+  const openMatch = openPattern.exec(html);
+  if (!openMatch) return -1;
+
+  const tagName = openMatch[1].toLowerCase();
+  const afterOpen = openMatch.index + openMatch[0].length;
+  const tagPattern = new RegExp(`</?${escapeRegExp(tagName)}\\b[^>]*>`, "gi");
+  tagPattern.lastIndex = afterOpen;
+
+  let depth = 1;
+  let match;
+  while ((match = tagPattern.exec(html)) !== null) {
+    const isClose = match[0].startsWith("</");
+    depth += isClose ? -1 : 1;
+    if (depth === 0) {
+      return match.index + match[0].length;
+    }
+  }
+
+  return -1;
+}
+
+/**
  * Inserts illustration markup as HTML strings (not live DOM nodes) so the browser
  * does not request EPUB-relative paths like /images/ch-001-ill-001.jpg during
- * client-side assembly.
+ * client-side assembly. Figures are placed immediately after the anchored passage.
  */
 export function insertIllustrationsIntoHtml(html, illustrations = []) {
   if (!illustrations.length) return html || "";
@@ -238,26 +269,22 @@ export function insertIllustrationsIntoHtml(html, illustrations = []) {
     )
     .map((illustration) => ({
       illustration,
-      position: (html || "").indexOf(
-        `data-visuai-anchor="${illustration.anchorId}"`
+      insertAt: findInsertIndexAfterAnchoredElement(
+        html || "",
+        illustration.anchorId
       ),
     }))
-    .filter((entry) => entry.position >= 0)
-    .sort((a, b) => b.position - a.position);
+    .filter((entry) => entry.insertAt >= 0)
+    .sort((a, b) => b.insertAt - a.insertAt);
 
   if (!anchored.length) return html || "";
 
   let result = html || "";
 
-  for (const { illustration } of anchored) {
+  for (const { illustration, insertAt } of anchored) {
     const src = illustration.imagePath ?? illustration.imageUrl;
     const figureHtml = buildIllustrationFigureHtml(illustration, src);
-    const anchorPattern = new RegExp(
-      `(<[^>]+data-visuai-anchor="${escapeRegExp(illustration.anchorId)}"[^>]*>)`,
-      "i"
-    );
-
-    result = result.replace(anchorPattern, `${figureHtml}$1`);
+    result = `${result.slice(0, insertAt)}${figureHtml}${result.slice(insertAt)}`;
   }
 
   return result;

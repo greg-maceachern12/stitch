@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, Sparkles } from "lucide-react";
@@ -26,6 +27,51 @@ export async function generateMetadata({ params }) {
   };
 }
 
+function ProFeatureImage({ image, priority = false }) {
+  return (
+    <figure className="pro-feature-inline-media">
+      <Image
+        src={image.src}
+        alt={image.alt}
+        width={image.width ?? 560}
+        height={image.height ?? 720}
+        priority={priority}
+        sizes="(max-width: 640px) 80vw, 300px"
+        className="h-auto w-full rounded-md border border-border bg-surface"
+      />
+      {image.caption ? (
+        <figcaption className="mt-2 text-xs leading-relaxed text-muted">
+          {image.caption}
+        </figcaption>
+      ) : null}
+    </figure>
+  );
+}
+
+function ProFeatureSection({ section, priority = false }) {
+  const proseClass =
+    "prose prose-neutral max-w-none prose-headings:font-serif prose-h2:mt-0 prose-h2:font-semibold prose-headings:text-foreground prose-p:text-foreground/90";
+
+  if (!section.image) {
+    return (
+      <section className={proseClass}>
+        <h2>{section.heading}</h2>
+        <p>{section.body}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="not-prose grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,300px)] sm:items-start sm:gap-8">
+      <div className={proseClass}>
+        <h2>{section.heading}</h2>
+        <p>{section.body}</p>
+      </div>
+      <ProFeatureImage image={section.image} priority={priority} />
+    </section>
+  );
+}
+
 export default async function ProFeaturePage({ params }) {
   const { slug } = await params;
   const feature = getProFeature(slug);
@@ -40,8 +86,8 @@ export default async function ProFeaturePage({ params }) {
 
   return (
     <SiteChrome variant="default">
-      <article className="w-full">
-        <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <article className="w-full max-w-3xl">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-4">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pro-blue)]/25 bg-[var(--pro-blue)]/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--pro-blue)]">
               <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
@@ -64,14 +110,15 @@ export default async function ProFeaturePage({ params }) {
           {detail.tagline}
         </p>
 
-        <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-serif prose-h2:font-semibold prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
+        <div className="prose prose-neutral mt-8 max-w-none space-y-8 prose-headings:font-serif prose-h2:font-semibold prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
           <p>{detail.intro}</p>
 
-          {detail.sections.map((section) => (
-            <section key={section.heading}>
-              <h2>{section.heading}</h2>
-              <p>{section.body}</p>
-            </section>
+          {detail.sections.map((section, index) => (
+            <ProFeatureSection
+              key={section.heading}
+              section={section}
+              priority={index === 0}
+            />
           ))}
         </div>
 

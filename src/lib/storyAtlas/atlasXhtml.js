@@ -85,7 +85,7 @@ export function buildStoryAtlasXhtml(plan, bookTitle) {
 </head>
 <body class="story-atlas">
   <header class="atlas-header">
-    <p class="atlas-brand">Visuai Story Atlas</p>
+    <p class="atlas-brand">Stitch Story Atlas</p>
     <h1 class="atlas-title">${escapeXml(bookTitle)}</h1>
     <p class="atlas-tagline">Your spoiler-free guide before you begin</p>
   </header>

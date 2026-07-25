@@ -1,4 +1,4 @@
-const STORAGE_KEY = "visuai:openrouter-api-key";
+const STORAGE_KEY = "stitch:openrouter-api-key";
 
 export function getStoredOpenRouterApiKey() {
   if (typeof window === "undefined") return "";

@@ -7,7 +7,7 @@ import FileUpload from "@/components/FileUpload";
 import Loading from "@/components/Loading";
 import CompleteCard from "@/components/CompleteCard";
 import AccessCode from "@/components/AccessCode";
-import VisuaiProChiclet, { useVisuaiProModal } from "@/components/VisuaiProChiclet";
+import StitchProChiclet, { useStitchProModal } from "@/components/StitchProChiclet";
 import { useIllustratedEpub } from "@/lib/client/useIllustratedEpub";
 import {
   canStartVisualization,
@@ -18,7 +18,7 @@ import {
 export default function AppShell() {
   const [isAccessGranted, setIsAccessGranted] = useState(true);
   const epubWorkflow = useIllustratedEpub();
-  const proModal = useVisuaiProModal();
+  const proModal = useStitchProModal();
 
   const handleAccessGranted = () => setIsAccessGranted(true);
   const isComplete = epubWorkflow.progress?.phase === PHASES.COMPLETE;
@@ -47,10 +47,10 @@ export default function AppShell() {
           Turn words into worlds
         </h1>
         <p className="mx-auto max-w-md text-base text-muted">
-          Upload an EPUB and Visuai will create illustation for each chapter.
+          Upload an EPUB and Stitch will create illustation for each chapter.
         </p>
         <div className="flex justify-center pt-1">
-          <VisuaiProChiclet modalControl={proModal} />
+          <StitchProChiclet modalControl={proModal} />
         </div>
       </header>
 

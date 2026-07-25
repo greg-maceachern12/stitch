@@ -1,7 +1,7 @@
 import { BookMarked, Cpu, Layers } from "lucide-react";
 
 /**
- * Single source of truth for the Visuai Pro feature set.
+ * Single source of truth for the Stitch Pro feature set.
  *
  * `id`/`icon`/`title`/`description` drive the compact feature rows in the Pro
  * modal. `slug` plus the `detail` block power the standalone deep-dive pages at
@@ -14,31 +14,43 @@ export const PRO_FEATURES = [
     icon: BookMarked,
     title: "Story Atlas",
     description:
-      "Spoiler-free recap, character portraits, and key places before chapter one.",
+      "Character portraits, key places, and a spoiler-free recap before chapter one.",
     detail: {
-      eyebrow: "Visuai Pro",
+      eyebrow: "Stitch Pro",
       tagline:
-        "Open any book to a visual briefing — who's who, where you are, and what's happened so far — without a single spoiler.",
+        "Before chapter one, you get a visual briefing: who matters, where you are, and what already happened. Nothing from later in the book.",
       intro:
-        "Story Atlas reads the book the way a careful editor would, then hands you an illustrated orientation page before you turn to chapter one. It's built for the reader picking a series back up after months away, or anyone who wants faces and places anchored before the plot starts moving.",
+        "Story Atlas builds an illustrated orientation page from the book itself and puts it in front of chapter one. Handy if you're returning to a series after months away, or if you just want faces and places locked in before the plot starts moving.",
       sections: [
         {
-          heading: "Portraits for the cast that matters",
-          body: "Visuai identifies the principal characters and renders a consistent portrait for each, drawn from the way the author actually describes them on the page. Names finally come with a face, so you stop flipping back to remember who betrayed whom.",
+          heading: "Portraits that stick",
+          body: "Stitch pulls the main cast from how the author actually describes them, and draws a consistent portrait for each. Names come with faces, so you stop flipping back to remember who did what.",
+          image: {
+            src: "/pro/story-atlas-characters.webp",
+            alt: "Story Atlas character portraits with names and short descriptions",
+            width: 364,
+            height: 600,
+          },
         },
         {
-          heading: "A map of the places you'll go",
-          body: "Cities, keeps, ships, and planets get their own establishing illustrations, grouped so you can see how the world fits together before you're dropped into it.",
+          heading: "Places before you're dropped in",
+          body: "Cities, keeps, ships, planets — the locations that matter get establishing art, grouped so the world makes sense before the story throws you into it.",
         },
         {
-          heading: "A recap that never spoils",
-          body: "For later books in a series, the Atlas summarizes everything up to your starting point and nothing past it. The recap is generated only from text you've already been cleared to see, so the next twist stays a twist.",
+          heading: "A recap that stops where you start",
+          body: "For later books in a series, the Atlas only summarizes up to your starting point. It never reads ahead, so the next twist stays a twist.",
+          image: {
+            src: "/pro/story-atlas-recap.webp",
+            alt: "Story Atlas recap page for Death's End with a spoiler-free Previously section",
+            width: 600,
+            height: 573,
+          },
         },
       ],
       highlights: [
-        "Lore-accurate character portraits pulled straight from the prose",
-        "Establishing art for the key locations in the book",
-        "Spoiler-bounded recap for picking up a series mid-stream",
+        "Portraits grounded in the prose",
+        "Establishing art for key locations",
+        "A recap that won't spoil what comes next",
       ],
     },
   },
@@ -47,31 +59,38 @@ export const PRO_FEATURES = [
     slug: "in-chapter-art",
     icon: Layers,
     title: "In-chapter art",
-    description: "Illustrations placed beside the passages they belong to.",
+    description:
+      "Extra illustrations, sitting next to the passages they belong to.",
     detail: {
-      eyebrow: "Visuai Pro",
+      eyebrow: "Stitch Pro",
       tagline:
-        "Images land exactly where the moment happens — inline with the paragraph that earned them, not stranded at the top of a chapter.",
+        "The picture shows up where the moment happens — next to that paragraph, not parked at the top of the chapter.",
       intro:
-        "The free preview gives you one image per chapter. In-chapter art breaks the chapter into its real beats and illustrates the moments that carry weight, then sets each image beside the passage it depicts so the reading rhythm never breaks.",
+        "Free preview gives you one image per chapter. In-chapter art finds the beats that actually deserve a picture, then drops each one beside the passage it depicts so reading doesn't feel interrupted.",
       sections: [
         {
-          heading: "Scene-aware placement",
-          body: "Visuai scans the chapter for the passages with the most visual payload — an arrival, a reveal, a battle — and anchors an illustration to each one. The picture shows up as you read into the moment, not before it.",
+          heading: "Placed on the scene, not the chapter header",
+          body: "Stitch looks for the moments with something to show — an arrival, a reveal, a fight — and anchors an illustration there. You see it as you read into it, not before.",
+          image: {
+            src: "/pro/in-chapter-art.webp",
+            alt: "In-chapter illustration placed above the passage it depicts, with caption and body text below",
+            width: 600,
+            height: 590,
+          },
         },
         {
-          heading: "Tuned to the page, not the chapter",
-          body: "Longer, denser chapters earn more illustrations; quiet connective scenes earn fewer. The density follows the story instead of a fixed quota.",
+          heading: "Density follows the story",
+          body: "Dense chapters get more art. Quieter connective scenes get less. No fixed quota per chapter.",
         },
         {
-          heading: "Reads like a real illustrated edition",
-          body: "Images are sized and positioned to flow with the text in the exported EPUB, so the result feels like a printed illustrated edition rather than a gallery bolted onto the file.",
+          heading: "Built for the EPUB, not a gallery dump",
+          body: "Images are sized to sit in the text flow of the exported file. Closer to a printed illustrated edition than a slideshow stapled on afterward.",
         },
       ],
       highlights: [
-        "Multiple illustrations per chapter, placed inline",
-        "Art anchored to the specific passage it depicts",
-        "Image density that scales with each chapter",
+        "Several illustrations per chapter, inline",
+        "Each one tied to a specific passage",
+        "More art where the chapter earns it",
       ],
     },
   },
@@ -81,31 +100,31 @@ export const PRO_FEATURES = [
     icon: Cpu,
     title: "Custom models",
     description:
-      "Grok, Flux, Seedream, Gemini, and more — your pick per book.",
+      "Pick the image model per book — Grok, Flux, Seedream, Gemini, and more.",
     detail: {
-      eyebrow: "Visuai Pro",
+      eyebrow: "Stitch Pro",
       tagline:
-        "Choose the image model that fits the book — gritty, painterly, photoreal, or stylized — and switch it per title.",
+        "Pick the look that fits the book — gritty, painterly, photoreal, stylized — and change it per title.",
       intro:
-        "Different books want different looks. Custom models let you pick the engine behind your illustrations, so a noir thriller and a high-fantasy epic don't have to share the same house style. Set it once per book and every illustration follows.",
+        "A noir thriller and a high-fantasy epic shouldn't have to share one house style. Custom models let you choose the engine behind the illustrations for that book. Set it once; every image follows.",
       sections: [
         {
-          heading: "A roster of image engines",
-          body: "Grok, Flux, Seedream, Gemini, and more are available to choose from, each with its own strengths in composition, lighting, and texture. You pick the one that matches the mood you're after.",
+          heading: "The models you can pick",
+          body: "Grok, Flux, Seedream, Gemini, and others are in the picker. They differ in lighting, texture, and how they handle composition. Choose the one that matches the mood you want.",
         },
         {
-          heading: "Per-book selection",
-          body: "Your model choice is scoped to the book you're working on, so you can render one library in cinematic concept art and another in soft watercolor without resetting anything.",
+          heading: "One choice per book",
+          body: "Model choice stays with the book you're working on. Run one title in cinematic concept art and another in soft watercolor without resetting anything.",
         },
         {
-          heading: "Room to grow",
-          body: "New models land in the picker as they're added, so your options keep expanding without changing how you work.",
+          heading: "New models show up in the same place",
+          body: "When we add engines, they land in the picker. Same workflow, bigger menu.",
         },
       ],
       highlights: [
-        "Choose from Grok, Flux, Seedream, Gemini, and more",
+        "Grok, Flux, Seedream, Gemini, and more",
         "Model choice scoped per book",
-        "New engines added to the picker over time",
+        "New engines added to the picker as they land",
       ],
     },
   },

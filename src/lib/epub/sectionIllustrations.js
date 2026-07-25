@@ -123,8 +123,8 @@ export function prepareChapterForSectionIllustrations(html, chapterIndex = 0) {
     const text = normalizeWhitespace(element.textContent);
     if (!isMeaningfulText(text, element)) return;
 
-    const anchorId = `visuai-ch-${chapterIndex + 1}-sec-${candidates.length + 1}`;
-    element.setAttribute("data-visuai-anchor", anchorId);
+    const anchorId = `stitch-ch-${chapterIndex + 1}-sec-${candidates.length + 1}`;
+    element.setAttribute("data-stitch-anchor", anchorId);
 
     candidates.push({
       anchorId,
@@ -224,12 +224,12 @@ function buildIllustrationFigureHtml(illustration, src) {
 
 /**
  * Find the index just after the full HTML element that carries the given
- * data-visuai-anchor, so illustrations can be placed below the passage.
+ * data-stitch-anchor, so illustrations can be placed below the passage.
  * Returns -1 when the anchor or a matching close tag cannot be found.
  */
 function findInsertIndexAfterAnchoredElement(html, anchorId) {
   const openPattern = new RegExp(
-    `<([a-z][a-z0-9]*)\\b[^>]*\\bdata-visuai-anchor="${escapeRegExp(anchorId)}"[^>]*>`,
+    `<([a-z][a-z0-9]*)\\b[^>]*\\bdata-stitch-anchor="${escapeRegExp(anchorId)}"[^>]*>`,
     "i"
   );
   const openMatch = openPattern.exec(html);

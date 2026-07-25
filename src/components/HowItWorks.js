@@ -7,7 +7,7 @@ const STEPS = [
   {
     num: "01",
     title: "Upload an EPUB",
-    body: "Drop in any EPUB. Visuai reads each chapter and finds the moments worth illustrating.",
+    body: "Drop in any EPUB. Stitch reads each chapter and finds the moments worth illustrating.",
     visual: "upload",
   },
   {
@@ -132,7 +132,7 @@ export default function HowItWorks() {
           </header>
         </Reveal>
 
-        <ol className="flex flex-col gap-12 sm:gap-14" aria-label="How Visuai works">
+        <ol className="flex flex-col gap-12 sm:gap-14" aria-label="How Stitch works">
           {STEPS.map((step, index) => (
             <li key={step.num}>
               <Reveal delay={index * 80}>

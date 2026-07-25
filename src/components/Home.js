@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import SiteChrome from "@/components/SiteChrome";
 import HowItWorks from "@/components/HowItWorks";
-import { useVisuaiProModal } from "@/components/VisuaiProChiclet";
+import { useStitchProModal } from "@/components/StitchProChiclet";
 import { PRO_FEATURES } from "@/lib/proFeatures";
 
 const VALUE_PROPS = [
@@ -98,7 +98,7 @@ function ProFeatureCard({ feature, index }) {
         href={`/pro/${feature.slug}`}
         className="group flex h-full flex-col rounded-md border border-border bg-surface p-5 transition-colors hover:bg-hover-surface"
       >
-        <span className="visuai-pro-feature-icon flex h-9 w-9 items-center justify-center rounded-md">
+        <span className="stitch-pro-feature-icon flex h-9 w-9 items-center justify-center rounded-md">
           <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
         </span>
         <h3 className="mt-4 font-display-semibold text-base text-foreground">
@@ -118,7 +118,7 @@ function ProFeatureCard({ feature, index }) {
 
 export default function Home() {
   const rootRef = useRevealOnScroll();
-  const proModal = useVisuaiProModal();
+  const proModal = useStitchProModal();
 
   return (
     <SiteChrome variant="landing">
@@ -161,7 +161,7 @@ export default function Home() {
 
               <Reveal delay={120}>
                 <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
-                  Upload any EPUB and Visuai paints lore-accurate illustrations
+                  Upload any EPUB and Stitch paints lore-accurate illustrations
                   into every chapter — then hands you back a finished illustrated
                   ebook.
                 </p>
@@ -184,13 +184,13 @@ export default function Home() {
 
         <HowItWorks />
 
-        {/* Why Visuai */}
+        {/* Why Stitch */}
         <section className="border-b border-border py-20 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <Reveal>
               <div className="mx-auto max-w-2xl text-center">
                 <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">
-                  Why Visuai
+                  Why Stitch
                 </h2>
                 <p className="mt-4 text-base text-muted">
                   Built for readers who want to see what the author described.
@@ -221,7 +221,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Visuai Pro */}
+        {/* Stitch Pro */}
         <section className="border-b border-border bg-surface py-20 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="pro-gradient-ring rounded-md">
@@ -244,7 +244,7 @@ export default function Home() {
                     <div className="relative max-w-xl">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pro-blue)]/25 bg-[var(--pro-blue)]/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--pro-blue)]">
                         <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
-                        Visuai Pro
+                        Stitch Pro
                       </span>
                       <h2 className="mt-4 text-3xl font-semibold text-foreground sm:text-4xl">
                         Beyond the free preview

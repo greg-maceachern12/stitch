@@ -29,10 +29,10 @@ function ProFeatureRow({ feature, index, onNavigate }) {
 
   return (
     <li
-      className="visuai-pro-feature-row flex items-start gap-3"
+      className="stitch-pro-feature-row flex items-start gap-3"
       style={{ "--row-index": index }}
     >
-      <span className="visuai-pro-feature-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+      <span className="stitch-pro-feature-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
         <Icon className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
       </span>
       <div className="min-w-0 pt-0.5">
@@ -55,7 +55,7 @@ function ProFeatureRow({ feature, index, onNavigate }) {
   );
 }
 
-function VisuaiProModal({
+function StitchProModal({
   onClose,
   titleId,
   descriptionId,
@@ -170,11 +170,11 @@ function VisuaiProModal({
   }, [onClose, returnFocusRef]);
 
   return createPortal(
-    <div className="visuai-pro-modal-root fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-6">
+    <div className="stitch-pro-modal-root fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-6">
       <button
         type="button"
-        className="visuai-pro-modal-backdrop absolute inset-0 cursor-default bg-[#1c1917]/35 backdrop-blur-md"
-        aria-label="Close Visuai Pro dialog"
+        className="stitch-pro-modal-backdrop absolute inset-0 cursor-default bg-[#1c1917]/35 backdrop-blur-md"
+        aria-label="Close Stitch Pro dialog"
         onClick={onClose}
       />
 
@@ -185,10 +185,10 @@ function VisuaiProModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="visuai-pro-modal-panel relative z-10 w-full max-w-[min(500px,calc(100vw-1.5rem))] origin-bottom sm:origin-center"
+        className="stitch-pro-modal-panel relative z-10 w-full max-w-[min(500px,calc(100vw-1.5rem))] origin-bottom sm:origin-center"
       >
-        <div className="visuai-pro-modal-frame overflow-hidden rounded-md border border-white/20 bg-surface shadow-[0_32px_64px_-24px_rgba(6,17,92,0.45),0_0_0_1px_rgba(255,255,255,0.12)_inset]">
-          <div className="visuai-pro-modal-scene relative aspect-[500/280] w-full">
+        <div className="stitch-pro-modal-frame overflow-hidden rounded-md border border-white/20 bg-surface shadow-[0_32px_64px_-24px_rgba(6,17,92,0.45),0_0_0_1px_rgba(255,255,255,0.12)_inset]">
+          <div className="stitch-pro-modal-scene relative aspect-[500/280] w-full">
             <Image
               src="/style-refs/oil-painting.jpg"
               alt=""
@@ -198,11 +198,11 @@ function VisuaiProModal({
               className="object-cover object-center"
             />
             <div
-              className="visuai-pro-modal-scrim visuai-pro-modal-scrim--hero pointer-events-none absolute inset-0"
+              className="stitch-pro-modal-scrim stitch-pro-modal-scrim--hero pointer-events-none absolute inset-0"
               aria-hidden
             />
             <div
-              className="visuai-pro-modal-edge-fade pointer-events-none absolute inset-x-0 bottom-0 z-[1]"
+              className="stitch-pro-modal-edge-fade pointer-events-none absolute inset-x-0 bottom-0 z-[1]"
               aria-hidden
             />
 
@@ -217,7 +217,7 @@ function VisuaiProModal({
                 <X className="h-4 w-4" aria-hidden />
               </button>
 
-              <span className="visuai-pro-modal-eyebrow inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-md">
+              <span className="stitch-pro-modal-eyebrow inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-md">
                 <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
                 Coming soon
               </span>
@@ -226,7 +226,7 @@ function VisuaiProModal({
                 id={titleId}
                 className="mt-3 text-xl font-semibold leading-tight text-white sm:text-2xl"
               >
-                Visuai Pro
+                Stitch Pro
               </h2>
               <p
                 id={descriptionId}
@@ -237,7 +237,7 @@ function VisuaiProModal({
             </header>
           </div>
 
-          <div className="visuai-pro-modal-sheet px-5 pb-5">
+          <div className="stitch-pro-modal-sheet px-5 pb-5">
               <h3 className="text-sm font-semibold text-foreground">
                 Beyond the free preview
               </h3>
@@ -245,7 +245,7 @@ function VisuaiProModal({
                 Your first three chapters stay free. Pro opens the full toolkit.
               </p>
 
-              <ul className="visuai-pro-feature-list mt-4 space-y-3">
+              <ul className="stitch-pro-feature-list mt-4 space-y-3">
                 {PRO_FEATURES.map((feature, index) => (
                   <ProFeatureRow
                     key={feature.id}
@@ -259,7 +259,7 @@ function VisuaiProModal({
               <div className="mt-5 flex flex-col gap-2.5">
                 {requestState === "success" ? (
                   <p className="rounded-md border border-[var(--pro-blue)]/20 bg-[var(--pro-blue)]/5 px-3 py-2.5 text-center text-xs leading-relaxed text-foreground">
-                    Request sent. We&apos;ll email you when Visuai Pro opens up.
+                    Request sent. We&apos;ll email you when Stitch Pro opens up.
                   </p>
                 ) : null}
 
@@ -293,21 +293,21 @@ function VisuaiProModal({
                 </button>
 
                 <div
-                  className={`visuai-pro-access-form ${showForm ? "visuai-pro-access-form--open" : ""}`}
+                  className={`stitch-pro-access-form ${showForm ? "stitch-pro-access-form--open" : ""}`}
                   aria-hidden={!showForm}
                 >
-                  <div className="visuai-pro-access-form-inner">
+                  <div className="stitch-pro-access-form-inner">
                     <form
                       onSubmit={handleSubmitAccess}
-                      className="visuai-pro-access-form-el"
+                      className="stitch-pro-access-form-el"
                     >
-                      <div className="visuai-pro-access-control">
-                        <label htmlFor="visuai-pro-email" className="sr-only">
+                      <div className="stitch-pro-access-control">
+                        <label htmlFor="stitch-pro-email" className="sr-only">
                           Email for early access
                         </label>
                         <input
                           ref={emailInputRef}
-                          id="visuai-pro-email"
+                          id="stitch-pro-email"
                           type="email"
                           name="email"
                           value={email}
@@ -322,12 +322,12 @@ function VisuaiProModal({
                           required
                           autoComplete="email"
                           disabled={requestState === "loading"}
-                          className="visuai-pro-access-input"
+                          className="stitch-pro-access-input"
                         />
                         <button
                           type="submit"
                           disabled={requestState === "loading"}
-                          className="visuai-pro-access-submit"
+                          className="stitch-pro-access-submit"
                           aria-label="Submit access request"
                         >
                           {requestState === "loading" ? (
@@ -360,7 +360,7 @@ function VisuaiProModal({
   );
 }
 
-export function useVisuaiProModal() {
+export function useStitchProModal() {
   const titleId = useId();
   const descriptionId = useId();
   const dialogId = useId();
@@ -377,7 +377,7 @@ export function useVisuaiProModal() {
 
   const modal =
     mounted && open ? (
-      <VisuaiProModal
+      <StitchProModal
         onClose={closeModal}
         titleId={titleId}
         descriptionId={descriptionId}
@@ -396,8 +396,8 @@ export function useVisuaiProModal() {
   };
 }
 
-export default function VisuaiProChiclet({ className = "", modalControl }) {
-  const fallback = useVisuaiProModal();
+export default function StitchProChiclet({ className = "", modalControl }) {
+  const fallback = useStitchProModal();
   const { triggerRef, openModal, open, dialogId, modal } = modalControl ?? fallback;
 
   return (
@@ -406,14 +406,14 @@ export default function VisuaiProChiclet({ className = "", modalControl }) {
         ref={triggerRef}
         type="button"
         onClick={openModal}
-        className={`visuai-pro-chiclet group ${className}`}
+        className={`stitch-pro-chiclet group ${className}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
       >
-        <span className="visuai-pro-chiclet-inner">
+        <span className="stitch-pro-chiclet-inner">
           <span
-            className="visuai-pro-icon-chip flex h-6 w-6 items-center justify-center rounded-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+            className="stitch-pro-icon-chip flex h-6 w-6 items-center justify-center rounded-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
             aria-hidden
           >
             <Sparkles
@@ -422,9 +422,9 @@ export default function VisuaiProChiclet({ className = "", modalControl }) {
             />
           </span>
           <span className="font-display-semibold text-[13px] text-[var(--pro-navy)]">
-            Visuai Pro
+            Stitch Pro
           </span>
-          <span className="visuai-pro-badge rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider">
+          <span className="stitch-pro-badge rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider">
             Pro
           </span>
         </span>

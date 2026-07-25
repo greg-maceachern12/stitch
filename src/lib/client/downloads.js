@@ -6,7 +6,7 @@ function epubFilename(title) {
       .replace(/^-+|-+$/g, "")
       .slice(0, 80) || "untitled";
 
-  return `Visuai_${slug}.epub`;
+  return `Stitch_${slug}.epub`;
 }
 
 function clickDownloadLink(href, download) {

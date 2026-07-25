@@ -70,7 +70,7 @@ export const IMAGE_MODEL_COST_USD = {
 /** 16:9 at 1K — used for megapixel-based models (Flux). */
 const FLUX_1K_16_9_MEGAPIXELS = (1024 * 576) / 1_000_000;
 
-const DEFAULT_PRICED_MODEL = "sourceful/riverflow-v2.5-fast";
+const DEFAULT_PRICED_MODEL = "google/gemini-3.1-flash-image-preview";
 
 export function getImageCostUsd(modelId) {
   const entry =

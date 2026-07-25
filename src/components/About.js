@@ -9,7 +9,7 @@ function About() {
     <SiteChrome variant="default">
       <article className="w-full">
         <header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="text-4xl text-foreground">About Visuai</h1>
+          <h1 className="text-4xl text-foreground">About Stitch</h1>
           <Link href="/app" className="btn-ghost shrink-0 self-start">
             <ArrowLeft className="h-4 w-4" />
             Back to app
@@ -18,7 +18,7 @@ function About() {
 
         <div className="prose prose-neutral max-w-none prose-headings:font-serif prose-h2:font-semibold prose-h3:font-normal prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-foreground/80 prose-li:text-foreground/90">
           <p>
-            Visuai started while I was deep in a stack of recent fiction — the Dune series,
+            Stitch started while I was deep in a stack of recent fiction — the Dune series,
             The Way of Kings, Eragon — and noticing how much work the authors put into
             describing what things actually look like.
           </p>
@@ -41,14 +41,14 @@ function About() {
           </blockquote>
 
           <p>
-            So I built Visuai to bring these books to life — to generate lore-accurate images
+            So I built Stitch to bring these books to life — to generate lore-accurate images
             of the characters and environments as you read.
           </p>
 
           <p>
             Ideally this lives inside Kindle or iBooks as an extension, generating visuals
             automatically or from highlighted passages. Until Amazon or Apple opens up an
-            extensions marketplace, Visuai runs as a self-serve platform.
+            extensions marketplace, Stitch runs as a self-serve platform.
           </p>
 
           <h2>Planned improvements</h2>

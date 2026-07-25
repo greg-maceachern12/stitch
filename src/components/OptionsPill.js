@@ -14,14 +14,11 @@ import {
   setStoredOpenRouterApiKey,
 } from "@/lib/client/openRouterApiKey";
 
-function SectionLabel({ children, trailing }) {
+function MicroLabel({ children }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="font-display-semibold text-xs uppercase tracking-[0.14em] text-muted">
-        {children}
-      </span>
-      {trailing ? <span className="shrink-0">{trailing}</span> : null}
-    </div>
+    <span className="font-display-semibold flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-muted">
+      {children}
+    </span>
   );
 }
 
@@ -38,6 +35,7 @@ function StylePreviewModal({ option, onClose }) {
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        event.stopPropagation();
         onClose();
       }
     };
@@ -54,7 +52,10 @@ function StylePreviewModal({ option, onClose }) {
   if (!option?.previewImageUrl) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-5 sm:p-8">
+    <div
+      data-options-portal
+      className="fixed inset-0 z-[120] flex items-center justify-center p-5 sm:p-8"
+    >
       <button
         type="button"
         className="absolute inset-0 cursor-zoom-out bg-foreground/30 backdrop-blur-[6px]"
@@ -197,38 +198,37 @@ function ModelRow({ imageModel, onImageModelChange, disabled }) {
     IMAGE_MODEL_OPTIONS[0];
 
   return (
-    <div
-      className={`relative flex items-center gap-2.5 rounded-md border border-border bg-surface px-2 py-1.5 transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-foreground/30 focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ${
-        disabled ? "opacity-50" : ""
-      }`}
-    >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[5px] border border-border/70 bg-background">
+    <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+      <span className="font-display-semibold text-sm text-foreground">
+        Model
+      </span>
+      <span className="relative flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors duration-200 hover:bg-hover-surface focus-within:bg-hover-surface">
         <img
           src={selected.logoUrl}
           alt=""
-          className="h-4 w-4 object-contain"
+          className="h-4 w-4 shrink-0 object-contain"
         />
+        <span className="min-w-0 truncate text-[13px] text-foreground">
+          {selected.label}
+        </span>
+        <ChevronDown
+          className="pointer-events-none h-3.5 w-3.5 shrink-0 text-muted"
+          aria-hidden
+        />
+        <select
+          aria-label="Image model"
+          value={imageModel}
+          disabled={disabled}
+          onChange={(e) => onImageModelChange(e.target.value)}
+          className="absolute inset-0 cursor-pointer appearance-none opacity-0 disabled:cursor-not-allowed"
+        >
+          {IMAGE_MODEL_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </span>
-      <span className="font-display-semibold min-w-0 flex-1 truncate text-sm text-foreground">
-        {selected.label}
-      </span>
-      <ChevronDown
-        className="pointer-events-none h-4 w-4 shrink-0 text-muted"
-        aria-hidden
-      />
-      <select
-        aria-label="Image model"
-        value={imageModel}
-        disabled={disabled}
-        onChange={(e) => onImageModelChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer appearance-none opacity-0 disabled:cursor-not-allowed"
-      >
-        {IMAGE_MODEL_OPTIONS.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
     </div>
   );
 }
@@ -241,13 +241,13 @@ function ToggleRow({ title, hint, checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
-      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors duration-200 hover:bg-hover-surface/60 disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors duration-200 hover:bg-hover-surface/60 disabled:cursor-not-allowed disabled:hover:bg-transparent"
     >
       <span className="min-w-0 flex-1">
         <span className="font-display-semibold block text-sm text-foreground">
           {title}
         </span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+        <span className="mt-0.5 block truncate text-[11px] leading-snug text-muted">
           {hint}
         </span>
       </span>
@@ -318,15 +318,6 @@ function UnlockForm({
   );
 }
 
-function UnlockedPill() {
-  return (
-    <span className="visuai-pro-pill-cyan inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-tight">
-      <Sparkles className="h-2.5 w-2.5" strokeWidth={2.25} aria-hidden />
-      Unlocked
-    </span>
-  );
-}
-
 function OpenRouterKeyField({
   disabled,
   onUnlockWithKey,
@@ -390,6 +381,90 @@ function OpenRouterKeyField({
   );
 }
 
+function ProUnlockRow({
+  disabled,
+  proUnlocked,
+  onProUnlock,
+  onProUnlockWithOpenRouterKey,
+  onClearOpenRouterKeyUnlock,
+  proUnlockError,
+  onClearProUnlockError,
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
+
+  // A failed passcode must never be hidden behind a collapsed row.
+  const open = expanded || Boolean(proUnlockError);
+
+  return (
+    <div
+      className="overflow-hidden rounded-md border border-border"
+      style={{ background: "var(--pro-gradient-soft)" }}
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors duration-200 hover:bg-foreground/[0.03]"
+      >
+        {proUnlocked ? (
+          <Sparkles
+            className="h-3.5 w-3.5 shrink-0 text-[var(--pro-blue)]"
+            strokeWidth={2}
+            aria-hidden
+          />
+        ) : (
+          <Lock
+            className="h-3.5 w-3.5 shrink-0 text-muted"
+            strokeWidth={2}
+            aria-hidden
+          />
+        )}
+        <span className="font-display-semibold flex-1 text-[13px] text-foreground">
+          {proUnlocked ? "Pro unlocked" : "Unlock Pro"}
+        </span>
+        {proUnlocked ? (
+          <span className="text-[11px] text-muted">Manage</span>
+        ) : null}
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-muted transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden
+        />
+      </button>
+
+      {open ? (
+        <div id={panelId} className="space-y-3 px-3 pb-3">
+          {!proUnlocked ? (
+            <>
+              <UnlockForm
+                disabled={disabled}
+                onProUnlock={onProUnlock}
+                onClearProUnlockError={onClearProUnlockError}
+                proUnlockError={proUnlockError}
+              />
+              <div className="flex items-center gap-2 px-0.5">
+                <span className="h-px flex-1 bg-border" aria-hidden />
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted/80">
+                  or
+                </span>
+                <span className="h-px flex-1 bg-border" aria-hidden />
+              </div>
+            </>
+          ) : null}
+          <OpenRouterKeyField
+            disabled={disabled}
+            onUnlockWithKey={onProUnlockWithOpenRouterKey}
+            onClearKeyUnlock={onClearOpenRouterKeyUnlock}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function OptionsPill({
   imageStyle = DEFAULT_IMAGE_STYLE,
   onImageStyleChange,
@@ -416,6 +491,43 @@ export default function OptionsPill({
     IMAGE_STYLE_OPTIONS[0].label;
   const togglesDisabled = disabled || !proUnlocked;
 
+  // Close on Escape or an outside click. Portalled children (the style preview
+  // modal) render outside this subtree, so they opt out via data-options-portal.
+  useEffect(() => {
+    const isOutside = (target) => {
+      const details = detailsRef.current;
+      if (!details || !(target instanceof Node)) return false;
+      if (details.contains(target)) return false;
+      return !(
+        target instanceof Element && target.closest("[data-options-portal]")
+      );
+    };
+
+    const close = () => {
+      if (detailsRef.current?.open) detailsRef.current.open = false;
+    };
+
+    const onPointerDown = (event) => {
+      if (isOutside(event.target)) close();
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      if (!detailsRef.current?.open) return;
+      if (document.querySelector("[data-options-portal]")) return;
+      event.preventDefault();
+      close();
+    };
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
   const togglePlacement = () => {
     onIllustrationModeChange?.(
       sectionArtEnabled
@@ -441,7 +553,7 @@ export default function OptionsPill({
           {activeStyle}
         </span>
         <ChevronDown
-          className="options-pill-chevron h-3.5 w-3.5 shrink-0 opacity-60 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-open/options:rotate-180"
           aria-hidden
         />
       </summary>
@@ -451,16 +563,8 @@ export default function OptionsPill({
         role="dialog"
         aria-label="Generation options"
       >
-        <div className="space-y-3 p-4">
-          <SectionLabel
-            trailing={
-              <span className="text-[11px] font-normal tracking-tight text-muted">
-                {activeStyle}
-              </span>
-            }
-          >
-            Style
-          </SectionLabel>
+        <div className="space-y-2.5 p-4">
+          <MicroLabel>Style</MicroLabel>
           <StyleGrid
             imageStyle={imageStyle}
             onImageStyleChange={onImageStyleChange}
@@ -468,72 +572,51 @@ export default function OptionsPill({
           />
         </div>
 
-        <div
-          className="relative space-y-3 border-t border-border p-4"
-          style={{ background: "var(--pro-gradient-soft)" }}
-        >
-          <SectionLabel trailing={proUnlocked ? <UnlockedPill /> : null}>
+        <div className="space-y-2.5 border-t border-border p-4">
+          <MicroLabel>
             Pro
-          </SectionLabel>
+            {!proUnlocked ? (
+              <Lock className="h-2.5 w-2.5" strokeWidth={2.25} aria-hidden />
+            ) : null}
+          </MicroLabel>
 
-          {!proUnlocked ? (
-            <div className="space-y-3">
-              <UnlockForm
-                disabled={disabled}
-                onProUnlock={onProUnlock}
-                onClearProUnlockError={onClearProUnlockError}
-                proUnlockError={proUnlockError}
-              />
-              <div className="flex items-center gap-2 px-0.5">
-                <span className="h-px flex-1 bg-border" aria-hidden />
-                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted/80">
-                  or
-                </span>
-                <span className="h-px flex-1 bg-border" aria-hidden />
-              </div>
-              <OpenRouterKeyField
-                disabled={disabled}
-                onUnlockWithKey={onProUnlockWithOpenRouterKey}
-                onClearKeyUnlock={onClearOpenRouterKeyUnlock}
-              />
-            </div>
-          ) : (
-            <OpenRouterKeyField
-              disabled={disabled}
-              onUnlockWithKey={onProUnlockWithOpenRouterKey}
-              onClearKeyUnlock={onClearOpenRouterKeyUnlock}
-            />
-          )}
+          <ProUnlockRow
+            disabled={disabled}
+            proUnlocked={proUnlocked}
+            onProUnlock={onProUnlock}
+            onProUnlockWithOpenRouterKey={onProUnlockWithOpenRouterKey}
+            onClearOpenRouterKeyUnlock={onClearOpenRouterKeyUnlock}
+            proUnlockError={proUnlockError}
+            onClearProUnlockError={onClearProUnlockError}
+          />
 
-          <div className="space-y-1.5">
-            <span className="font-display-semibold block text-[10px] uppercase tracking-[0.14em] text-muted/75">
-              Image model
-            </span>
+          <div
+            className={`divide-y divide-border overflow-hidden rounded-md border border-border bg-surface transition-opacity duration-300 ${
+              togglesDisabled ? "opacity-45" : ""
+            }`}
+          >
             <ModelRow
               imageModel={imageModel}
               onImageModelChange={onImageModelChange}
               disabled={togglesDisabled}
             />
-          </div>
-
-          <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
             <ToggleRow
               title="Section art"
-              hint="Place illustrations beside passages within chapters"
+              hint="Inline art beside passages"
               checked={sectionArtEnabled}
               onChange={togglePlacement}
               disabled={togglesDisabled}
             />
             <ToggleRow
               title="Full book"
-              hint="Illustrate every chapter, not only the first three"
+              hint="Every chapter, not just three"
               checked={fullBookUnlocked}
               onChange={() => onFullBookChange?.(!fullBookUnlocked)}
               disabled={togglesDisabled}
             />
             <ToggleRow
               title="Story Atlas"
-              hint="Spoiler-free recap, characters, and places before chapter one"
+              hint="Recap before chapter one"
               checked={storyAtlasEnabled}
               onChange={() => onStoryAtlasChange?.(!storyAtlasEnabled)}
               disabled={togglesDisabled}

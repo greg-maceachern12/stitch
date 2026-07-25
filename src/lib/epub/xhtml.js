@@ -33,7 +33,7 @@ function maskEpubRelativeImgSrc(html) {
     (_match, before, src, after) => {
       const id = replacements.length;
       replacements.push(src);
-      return `${before}#visuai-epub-img-${id}${after}`;
+      return `${before}#stitch-epub-img-${id}${after}`;
     }
   );
 
@@ -42,7 +42,7 @@ function maskEpubRelativeImgSrc(html) {
     restore: (value) => {
       let result = value;
       for (let i = 0; i < replacements.length; i++) {
-        result = result.replace(`#visuai-epub-img-${i}`, replacements[i]);
+        result = result.replace(`#stitch-epub-img-${i}`, replacements[i]);
       }
       return result;
     },

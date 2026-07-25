@@ -122,6 +122,21 @@
     border-color: rgba(55, 53, 47, 0.2);
   }
 
+  .options-panel {
+    animation: options-panel-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes options-panel-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97) translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
   .pro-gradient-ring {
     @apply relative isolate border-0 bg-transparent p-[2px];
   }
@@ -141,7 +156,7 @@
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     mask-composite: exclude;
-    animation: visuai-pro-ring-spin 10s linear infinite;
+    animation: stitch-pro-ring-spin 10s linear infinite;
     pointer-events: none;
   }
 
@@ -156,7 +171,7 @@
   .pro-gradient-ring--animate-in::before {
     animation:
       pro-gradient-ring-border-in 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-      visuai-pro-ring-spin 10s linear 0.72s infinite;
+      stitch-pro-ring-spin 10s linear 0.72s infinite;
   }
 
   .pro-gradient-ring--animate-in:hover::before {
@@ -220,42 +235,42 @@
       0 0 16px -6px rgba(210, 129, 192, 0.15);
   }
 
-  .visuai-pro-chiclet {
+  .stitch-pro-chiclet {
     @apply pro-gradient-ring rounded-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)];
   }
 
-  .visuai-pro-chiclet-inner {
+  .stitch-pro-chiclet-inner {
     @apply relative z-[1] inline-flex items-center gap-2 rounded-full px-4 py-2;
     background: var(--pro-fill);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
     transition: box-shadow 0.3s ease;
   }
 
-  .visuai-pro-chiclet:hover .visuai-pro-chiclet-inner {
+  .stitch-pro-chiclet:hover .stitch-pro-chiclet-inner {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.98),
       0 0 20px -4px rgba(65, 169, 254, 0.35),
       0 0 16px -6px rgba(210, 129, 192, 0.25);
   }
 
-  @keyframes visuai-pro-ring-spin {
+  @keyframes stitch-pro-ring-spin {
     to {
       --pro-ring-angle: 360deg;
     }
   }
 
-  .visuai-pro-badge {
+  .stitch-pro-badge {
     background: var(--pro-blue);
     color: #fff;
   }
 
-  .visuai-pro-icon-chip {
+  .stitch-pro-icon-chip {
     border: 1px solid rgba(40, 59, 175, 0.18);
     background: rgba(255, 255, 255, 0.85);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
-  .visuai-pro-modal-scrim--hero {
+  .stitch-pro-modal-scrim--hero {
     background: linear-gradient(
       165deg,
       rgba(6, 17, 92, 0.68) 0%,
@@ -264,7 +279,7 @@
     );
   }
 
-  .visuai-pro-modal-edge-fade {
+  .stitch-pro-modal-edge-fade {
     height: 48%;
     background: linear-gradient(
       to bottom,
@@ -275,11 +290,11 @@
     );
   }
 
-  .visuai-pro-modal-eyebrow {
+  .stitch-pro-modal-eyebrow {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
-  .visuai-pro-modal-sheet {
+  .stitch-pro-modal-sheet {
     position: relative;
     z-index: 2;
     margin-top: -1.75rem;
@@ -287,19 +302,19 @@
     background: var(--surface);
   }
 
-  .visuai-pro-feature-icon {
+  .stitch-pro-feature-icon {
     border: 1px solid rgba(40, 59, 175, 0.14);
     background: rgba(255, 255, 255, 0.9);
     color: var(--pro-blue);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
-  .visuai-pro-feature-row {
-    animation: visuai-pro-row-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  .stitch-pro-feature-row {
+    animation: stitch-pro-row-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: calc(120ms + var(--row-index, 0) * 70ms);
   }
 
-  @keyframes visuai-pro-row-in {
+  @keyframes stitch-pro-row-in {
     from {
       opacity: 0;
       transform: translateY(6px);
@@ -330,7 +345,7 @@
     transform: scale(0.98);
   }
 
-  .visuai-pro-access-form {
+  .stitch-pro-access-form {
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
@@ -339,21 +354,21 @@
       opacity 0.2s ease;
   }
 
-  .visuai-pro-access-form--open {
+  .stitch-pro-access-form--open {
     grid-template-rows: 1fr;
     opacity: 1;
   }
 
-  .visuai-pro-access-form-inner {
+  .stitch-pro-access-form-inner {
     min-height: 0;
     overflow: hidden;
   }
 
-  .visuai-pro-access-form--open .visuai-pro-access-form-el {
+  .stitch-pro-access-form--open .stitch-pro-access-form-el {
     margin-top: 0.625rem;
   }
 
-  .visuai-pro-access-control {
+  .stitch-pro-access-control {
     display: flex;
     align-items: stretch;
     height: 2.75rem;
@@ -367,14 +382,14 @@
       box-shadow 0.2s ease;
   }
 
-  .visuai-pro-access-control:focus-within {
+  .stitch-pro-access-control:focus-within {
     border-color: rgba(40, 59, 175, 0.5);
     box-shadow:
       0 0 0 3px rgba(40, 59, 175, 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 0.85);
   }
 
-  .visuai-pro-access-input {
+  .stitch-pro-access-input {
     min-width: 0;
     flex: 1;
     border: none;
@@ -385,20 +400,20 @@
     color: var(--foreground);
   }
 
-  .visuai-pro-access-input::placeholder {
+  .stitch-pro-access-input::placeholder {
     color: color-mix(in srgb, var(--pro-ink-muted) 55%, transparent);
   }
 
-  .visuai-pro-access-input:focus {
+  .stitch-pro-access-input:focus {
     outline: none;
   }
 
-  .visuai-pro-access-input:disabled {
+  .stitch-pro-access-input:disabled {
     opacity: 0.55;
     cursor: not-allowed;
   }
 
-  .visuai-pro-access-submit {
+  .stitch-pro-access-submit {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
@@ -413,29 +428,29 @@
       transform 0.2s ease;
   }
 
-  .visuai-pro-access-submit:hover:not(:disabled) {
+  .stitch-pro-access-submit:hover:not(:disabled) {
     background: var(--pro-blue);
   }
 
-  .visuai-pro-access-submit:active:not(:disabled) {
+  .stitch-pro-access-submit:active:not(:disabled) {
     transform: scale(0.98);
   }
 
-  .visuai-pro-access-submit:disabled {
+  .stitch-pro-access-submit:disabled {
     cursor: not-allowed;
     opacity: 0.55;
   }
 
-  .visuai-pro-access-submit:focus-visible {
+  .stitch-pro-access-submit:focus-visible {
     outline: 2px solid rgba(40, 59, 175, 0.45);
     outline-offset: -2px;
   }
 
-  .visuai-pro-chiclet:active {
+  .stitch-pro-chiclet:active {
     transform: scale(0.98);
   }
 
-  @keyframes visuai-pro-modal-in {
+  @keyframes stitch-pro-modal-in {
     from {
       opacity: 0;
       transform: translateY(12px) scale(0.98);
@@ -446,7 +461,7 @@
     }
   }
 
-  @keyframes visuai-pro-backdrop-in {
+  @keyframes stitch-pro-backdrop-in {
     from {
       opacity: 0;
     }
@@ -455,23 +470,24 @@
     }
   }
 
-  .visuai-pro-modal-backdrop {
-    animation: visuai-pro-backdrop-in 0.28s ease-out forwards;
+  .stitch-pro-modal-backdrop {
+    animation: stitch-pro-backdrop-in 0.28s ease-out forwards;
   }
 
-  .visuai-pro-modal-panel {
-    animation: visuai-pro-modal-in 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .stitch-pro-modal-panel {
+    animation: stitch-pro-modal-in 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .visuai-pro-modal-backdrop,
-    .visuai-pro-modal-panel,
-    .visuai-pro-feature-row,
-    .visuai-pro-chiclet::before,
+    .stitch-pro-modal-backdrop,
+    .stitch-pro-modal-panel,
+    .stitch-pro-feature-row,
+    .stitch-pro-chiclet::before,
     .pro-gradient-ring::before,
     .pro-gradient-ring--animate-in,
     .pro-gradient-ring--animate-in .pro-gradient-ring-inner,
-    .visuai-pro-access-form,
+    .stitch-pro-access-form,
+    .options-panel,
     .home-reveal {
       animation: none;
       transition: none;
@@ -527,5 +543,9 @@
 
   .home-flow-title {
     text-wrap: balance;
+  }
+
+  .pro-feature-inline-media {
+    @apply w-full max-w-[300px] sm:max-w-none;
   }
 }

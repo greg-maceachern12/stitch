@@ -2,7 +2,7 @@ import "./globals.css";
 import { fontVariables, openSans } from "@/lib/fonts";
 
 export const metadata = {
-  title: "Visuai",
+  title: "Stitch",
   description: "Turn words into worlds — add AI illustrations to your ebooks.",
 };
 

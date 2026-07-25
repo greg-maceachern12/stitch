@@ -24,7 +24,7 @@ function AccessCode({ onAccessGranted }) {
         <p className="text-sm text-muted">
           Full-book generation requires a code.{" "}
           <a
-            href="mailto:gregmaceachern98@gmail.com?subject=Access%20Code%20For%20Pro&body=Please%20grant%20me%20access%20to%20Visuai%20Pro"
+            href="mailto:gregmaceachern98@gmail.com?subject=Access%20Code%20For%20Pro&body=Please%20grant%20me%20access%20to%20Stitch%20Pro"
             className="underline underline-offset-4 hover:text-foreground"
           >
             Request access

@@ -98,8 +98,8 @@ const Navbar = () => {
         body: JSON.stringify({
           access_key: accessKey,
           email: trimmedEmail,
-          subject: "Visuai — issue report",
-          from_name: "Visuai issues",
+          subject: "Stitch — issue report",
+          from_name: "Stitch issues",
           message: [
             trimmedBody,
             "",
@@ -127,13 +127,13 @@ const Navbar = () => {
           <div className="flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
-                src="/logo_trans.png"
-                alt="Visuai Logo"
+                src="/logo.png"
+                alt="Stitch Logo"
                 width={40}
                 height={40}
                 className="h-10 w-10"
               />
-              <span className="font-display-semibold text-base text-foreground">Visuai</span>
+              <span className="font-display-semibold text-base text-foreground">Stitch</span>
             </Link>
 
             <div className="hidden items-center gap-1 md:flex">
@@ -247,7 +247,7 @@ const Navbar = () => {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <button
               type="button"
-              className="visuai-pro-modal-backdrop absolute inset-0 cursor-default bg-[#1c1917]/50 backdrop-blur-md"
+              className="stitch-pro-modal-backdrop absolute inset-0 cursor-default bg-[#1c1917]/50 backdrop-blur-md"
               aria-label="Close issue report"
               onClick={closeIssues}
             />
@@ -255,7 +255,7 @@ const Navbar = () => {
               role="dialog"
               aria-modal="true"
               aria-labelledby="issues-dialog-title"
-              className="visuai-pro-modal-panel form-card relative z-10 w-full max-w-md shadow-[0_24px_56px_-20px_rgba(28,25,23,0.45)]"
+              className="stitch-pro-modal-panel form-card relative z-10 w-full max-w-md shadow-[0_24px_56px_-20px_rgba(28,25,23,0.45)]"
             >
               <h2 id="issues-dialog-title" className="text-lg text-foreground">
                 Report an issue

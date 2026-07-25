@@ -27,7 +27,7 @@ export async function requestProAccess({ email }) {
     typeof navigator !== "undefined" ? navigator.userAgent : undefined;
 
   const message = [
-    "Someone requested early access to Visuai Pro.",
+    "Someone requested early access to Stitch Pro.",
     "",
     `Email: ${normalizedEmail}`,
     pageUrl ? `Page: ${pageUrl}` : null,
@@ -46,8 +46,8 @@ export async function requestProAccess({ email }) {
     body: JSON.stringify({
       access_key: accessKey,
       email: normalizedEmail,
-      subject: "Visuai Pro — access request",
-      from_name: "Visuai Pro waitlist",
+      subject: "Stitch Pro — access request",
+      from_name: "Stitch Pro waitlist",
       message,
     }),
   });

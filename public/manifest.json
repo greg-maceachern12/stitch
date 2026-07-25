@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Stitch",
+  "name": "Stitch — Turn words into worlds",
   "icons": [
     {
       "src": "favicon.ico",

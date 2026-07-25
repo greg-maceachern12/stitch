@@ -398,7 +398,7 @@ function addChapter(
 
 function addPackageFiles(oebps, { title, author, manifestItems, spineItems, navPoints }) {
   const modifiedDate = new Date().toISOString().split("T")[0];
-  const id = `visuai-${Date.now()}`;
+  const id = `stitch-${Date.now()}`;
 
   oebps.file(
     "content.opf",

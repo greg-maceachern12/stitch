@@ -1,6 +1,6 @@
-# Visuai
+# Stitch
 
-Upload an EPUB, pick a style and image model, and get back an illustrated EPUB. Visuai finds the passages worth drawing inside each story chapter, generates section art, and builds the new file in your browser. The server never stores your book or the finished download.
+Upload an EPUB, pick a style and image model, and get back an illustrated EPUB. Stitch finds the passages worth drawing inside each story chapter, generates section art, and builds the new file in your browser. The server never stores your book or the finished download.
 
 ## Why I built this
 
@@ -8,7 +8,7 @@ I was deep in recent fiction — Dune, The Way of Kings, Eragon — and kept not
 
 Bradbury does the thing I'm talking about in *Fahrenheit 451*: a girl on moonlit pavement, trees overhead "letting down their dry rain." That writing asks you to see the scene. I wanted help seeing it without breaking the read.
 
-Visuai generates lore-aware images of characters and places as you go. Eventually this should live inside Kindle or iBooks — automatic art, or art from a highlight. Amazon and Apple don't offer that kind of extension yet, so for now it's a self-serve web app.
+Stitch generates lore-aware images of characters and places as you go. Eventually this should live inside Kindle or iBooks — automatic art, or art from a highlight. Amazon and Apple don't offer that kind of extension yet, so for now it's a self-serve web app.
 
 ## What works today
 
@@ -50,7 +50,7 @@ OPENROUTER_MODEL=google/gemini-3.5-flash-lite
 API_USE_MOCKS=false
 ```
 
-Image model is chosen in the UI (see `.env.example` for optional Web3Forms key if you use Visuai Pro access requests).
+Image model is chosen in the UI (see `.env.example` for optional Web3Forms key if you use Stitch Pro access requests).
 
 ## Scripts
 

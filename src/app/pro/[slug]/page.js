@@ -18,11 +18,11 @@ export async function generateMetadata({ params }) {
   const feature = getProFeature(slug);
 
   if (!feature) {
-    return { title: "Visuai Pro" };
+    return { title: "Stitch Pro" };
   }
 
   return {
-    title: `${feature.title} — Visuai Pro`,
+    title: `${feature.title} — Stitch Pro`,
     description: feature.description,
   };
 }
@@ -94,7 +94,7 @@ export default async function ProFeaturePage({ params }) {
               {detail.eyebrow}
             </span>
             <div className="flex items-start gap-3">
-              <span className="visuai-pro-feature-icon mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md">
+              <span className="stitch-pro-feature-icon mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md">
                 <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
               </span>
               <h1 className="text-4xl text-foreground">{feature.title}</h1>
@@ -146,11 +146,11 @@ export default async function ProFeaturePage({ params }) {
 
         {otherFeatures.length ? (
           <nav
-            aria-label="More Visuai Pro features"
+            aria-label="More Stitch Pro features"
             className="mt-10 border-t border-border pt-8"
           >
             <h2 className="font-display-semibold text-sm text-foreground">
-              More in Visuai Pro
+              More in Stitch Pro
             </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {otherFeatures.map((item) => {
@@ -161,7 +161,7 @@ export default async function ProFeaturePage({ params }) {
                     href={`/pro/${item.slug}`}
                     className="group flex items-start gap-3 rounded-md border border-border bg-surface p-4 transition-colors hover:bg-hover-surface"
                   >
-                    <span className="visuai-pro-feature-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+                    <span className="stitch-pro-feature-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
                       <ItemIcon className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
                     </span>
                     <span className="min-w-0">

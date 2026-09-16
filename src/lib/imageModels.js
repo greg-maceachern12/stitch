@@ -1,7 +1,7 @@
 import { formatPerImageCost, getImageCostUsd } from "@/lib/imageModelPricing";
 
-/** Default OpenRouter image model (Nano Banana). */
-export const DEFAULT_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview";
+/** Default OpenRouter image model (Muse Image). */
+export const DEFAULT_IMAGE_MODEL = "meta/muse-image";
 
 /** @type {Record<string, { label: string; logoUrl: string }>} */
 export const IMAGE_MODELS = {
@@ -58,7 +58,7 @@ export function getImageModel(modelId) {
   return { id, ...IMAGE_MODELS[id] };
 }
 
-/** Resolve a user-selected model id; invalid/missing values fall back to Nano Banana. */
+/** Resolve a user-selected model id; invalid/missing values fall back to Muse Image. */
 export function resolveImageModel(requestedModel) {
   return getImageModel(requestedModel).id;
 }

@@ -25,17 +25,65 @@ export function runWithOpenRouterApiKey(apiKey, fn) {
   return openRouterApiKeyStore.run(normalizeOpenRouterApiKey(apiKey), fn);
 }
 
-/** Modalities required by the image model (Grok/Seedream/Krea/Sourceful are image-only; most others also return text). */
-export function getImageGenerationModalities(model) {
-  if (
-    model.startsWith("x-ai/grok-imagine") ||
-    model.startsWith("bytedance-seed/seedream") ||
-    model.startsWith("krea/") ||
-    model.startsWith("sourceful/riverflow")
-  ) {
-    return ["image"];
+const OPENROUTER_IMAGES_URL = "https://openrouter.ai/api/v1/images";
+
+function getOpenRouterApiKey() {
+  return openRouterApiKeyStore.getStore() || process.env.OPENROUTER_API_KEY;
+}
+
+export function requireOpenRouterApiKey(routeLabel) {
+  const apiKey = getOpenRouterApiKey();
+  if (!apiKey) {
+    throw new ApiError(
+      `${routeLabel} not configured. Add an OpenRouter API key in Options, or set OPENROUTER_API_KEY in .env.local.`,
+      501
+    );
   }
-  return ["image", "text"];
+  return apiKey;
+}
+
+/**
+ * Dedicated Image API (`POST /api/v1/images`). All Stitch image models go
+ * through this endpoint — not chat/completions.
+ */
+export async function generateOpenRouterImage({
+  model,
+  prompt,
+  aspectRatio,
+  inputReferences,
+}) {
+  const apiKey = requireOpenRouterApiKey("Image generation route");
+  const body = {
+    model,
+    prompt,
+    aspect_ratio: aspectRatio,
+  };
+  if (Array.isArray(inputReferences) && inputReferences.length > 0) {
+    body.input_references = inputReferences;
+  }
+
+  const response = await fetch(OPENROUTER_IMAGES_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message =
+      payload?.error?.message ||
+      payload?.message ||
+      `OpenRouter images failed: ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.body = payload;
+    throw error;
+  }
+
+  return payload;
 }
 
 export function getOpenRouterTextModel() {
@@ -57,13 +105,5 @@ export function getOpenRouterImageModel(requestedModel) {
 }
 
 export function requireOpenRouterClient(routeLabel) {
-  const apiKey =
-    openRouterApiKeyStore.getStore() || process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new ApiError(
-      `${routeLabel} not configured. Add an OpenRouter API key in Options, or set OPENROUTER_API_KEY in .env.local.`,
-      501
-    );
-  }
-  return new OpenRouter({ apiKey });
+  return new OpenRouter({ apiKey: requireOpenRouterApiKey(routeLabel) });
 }

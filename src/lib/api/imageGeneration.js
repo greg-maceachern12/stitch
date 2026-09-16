@@ -3,35 +3,15 @@ import { resolveStyleReferenceForApi } from "@/lib/server/styleReference";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload, truncate } from "./logger";
 import {
-  getImageGenerationModalities,
+  generateOpenRouterImage,
   getOpenRouterImageModel,
-  requireOpenRouterClient,
 } from "./openrouter";
 
 const PLACEHOLDER_IMAGE =
   "https://cdn.iconscout.com/icon/free/png-256/free-error-2653315-2202987.png";
 
-/** Landscape ratio for all generated book images (OpenRouter image_config). */
+/** Landscape ratio for all generated book images (OpenRouter Image API). */
 const DEFAULT_IMAGE_ASPECT_RATIO = "16:9";
-
-function buildImageGenerationContent(
-  promptText,
-  style,
-  includeReferenceImage,
-  referenceDataUrl
-) {
-  const content = [{ type: "text", text: promptText }];
-
-  if (includeReferenceImage && referenceDataUrl && style.referenceInstruction) {
-    content[0].text = `${promptText} ${style.referenceInstruction}`;
-    content.push({
-      type: "image_url",
-      imageUrl: { url: referenceDataUrl },
-    });
-  }
-
-  return content;
-}
 
 function providerStatus(error) {
   return error.status ?? error.statusCode ?? error.rawResponse?.status ?? 502;
@@ -51,66 +31,84 @@ function isProviderError(error) {
   return providerStatus(error) >= 400;
 }
 
-function extractImageUrls(message) {
-  const images = message?.images;
-  if (!Array.isArray(images) || images.length === 0) {
+function toDataUrl(b64, mediaType) {
+  const type = mediaType || "image/png";
+  return `data:${type};base64,${b64}`;
+}
+
+function extractImageUrls(payload) {
+  const data = payload?.data;
+  if (!Array.isArray(data) || data.length === 0) {
     return [];
   }
 
-  return images
-    .map((image) => image?.imageUrl?.url ?? image?.image_url?.url)
-    .filter((url) => typeof url === "string" && url.length > 0);
+  return data
+    .map((image) => {
+      if (typeof image?.url === "string" && image.url.length > 0) {
+        return image.url;
+      }
+      const b64 = image?.b64_json ?? image?.b64Json;
+      if (typeof b64 === "string" && b64.length > 0) {
+        return toDataUrl(b64, image?.media_type ?? image?.mediaType);
+      }
+      return null;
+    })
+    .filter(Boolean);
 }
 
-/** Log-friendly view of the assistant message (no full data URLs). */
-function summarizeAssistantMessage(message) {
-  if (!message || typeof message !== "object") {
+/** Log-friendly view of an Image API response (no full base64). */
+function summarizeImageResponse(payload) {
+  if (!payload || typeof payload !== "object") {
     return { present: false };
   }
 
-  const images = message.images;
-  const imageEntries = Array.isArray(images)
-    ? images.map((image, index) => {
-        const url = image?.imageUrl?.url ?? image?.image_url?.url;
-        if (typeof url !== "string" || url.length === 0) {
-          return { index, url: null, keys: Object.keys(image || {}) };
+  const data = payload.data;
+  const imageEntries = Array.isArray(data)
+    ? data.map((image, index) => {
+        const url = image?.url;
+        const b64 = image?.b64_json ?? image?.b64Json;
+        if (typeof url === "string" && url.length > 0) {
+          return { index, urlType: "remote", urlPreview: truncate(url, 80) };
         }
-        if (url.startsWith("data:")) {
-          return { index, urlType: "data", urlLength: url.length };
+        if (typeof b64 === "string" && b64.length > 0) {
+          return {
+            index,
+            urlType: "data",
+            mediaType: image?.media_type ?? image?.mediaType ?? null,
+            urlLength: b64.length,
+          };
         }
-        return { index, urlType: "remote", urlPreview: truncate(url, 80) };
+        return { index, url: null, keys: Object.keys(image || {}) };
       })
     : null;
 
-  const content = message.content;
-  let contentPreview = "";
-  if (typeof content === "string") {
-    contentPreview = truncate(content, 200);
-  } else if (content != null) {
-    contentPreview = truncate(JSON.stringify(content), 200);
-  }
-
   return {
-    role: message.role,
-    finishReason: message.finish_reason ?? message.finishReason,
-    messageKeys: Object.keys(message),
-    contentLength: typeof content === "string" ? content.length : null,
-    contentPreview,
-    imageCount: Array.isArray(images) ? images.length : 0,
+    created: payload.created ?? null,
+    payloadKeys: Object.keys(payload),
+    imageCount: Array.isArray(data) ? data.length : 0,
     images: imageEntries,
+    usage: payload.usage ?? null,
   };
 }
 
-function urlsFromResponse(response) {
-  const message = response?.choices?.[0]?.message;
+function urlsFromResponse(payload) {
   return {
-    urls: extractImageUrls(message),
-    message,
+    urls: extractImageUrls(payload),
+    payload,
   };
+}
+
+function buildInputReferences(referenceDataUrl) {
+  if (!referenceDataUrl) return undefined;
+  return [
+    {
+      type: "image_url",
+      image_url: { url: referenceDataUrl },
+    },
+  ];
 }
 
 async function sendImageRequest({
-  client,
   model,
   fullPrompt,
   style,
@@ -118,26 +116,19 @@ async function sendImageRequest({
   referenceDataUrl,
   aspectRatio = DEFAULT_IMAGE_ASPECT_RATIO,
 }) {
-  return client.chat.send({
-    chatRequest: {
-      model,
-      stream: false,
-      modalities: getImageGenerationModalities(model),
-      messages: [
-        {
-          role: "user",
-          content: buildImageGenerationContent(
-            fullPrompt,
-            style,
-            includeReferenceImage,
-            referenceDataUrl
-          ),
-        },
-      ],
-      imageConfig: {
-        aspect_ratio: aspectRatio,
-      },
-    },
+  const useReference =
+    includeReferenceImage && referenceDataUrl && style.referenceInstruction;
+  const prompt = useReference
+    ? `${fullPrompt} ${style.referenceInstruction}`
+    : fullPrompt;
+
+  return generateOpenRouterImage({
+    model,
+    prompt,
+    aspectRatio,
+    inputReferences: useReference
+      ? buildInputReferences(referenceDataUrl)
+      : undefined,
   });
 }
 
@@ -153,7 +144,6 @@ export async function generateImage(prompt, imageStyle, imageModel) {
 
   const style = getImageStyle(imageStyle);
   const model = getOpenRouterImageModel(imageModel);
-  const client = requireOpenRouterClient("Image generation route");
   const fullPrompt = `${prompt.trim()}${style.promptSuffix}`;
   const wantsReferenceImage = Boolean(
     style.referenceImageUrl && style.referenceInstruction
@@ -187,7 +177,6 @@ export async function generateImage(prompt, imageStyle, imageModel) {
   });
 
   const baseRequest = {
-    client,
     model,
     fullPrompt,
     style,
@@ -228,7 +217,7 @@ export async function generateImage(prompt, imageStyle, imageModel) {
       });
     }
 
-    let { urls, message } = urlsFromResponse(response);
+    let { urls, payload } = urlsFromResponse(response);
     const activeRequest = retriedWithoutReference
       ? {
           ...requestWithAspect,
@@ -240,11 +229,11 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     if (urls.length === 0) {
       console.warn(
         "OpenRouter returned no image URLs; retrying once with the same request.",
-        { model, message: summarizeAssistantMessage(message) }
+        { model, response: summarizeImageResponse(payload) }
       );
       retriedEmptyResponse = true;
       response = await sendImageRequest(activeRequest);
-      ({ urls, message } = urlsFromResponse(response));
+      ({ urls, payload } = urlsFromResponse(response));
     }
 
     if (urls.length > 0) {
@@ -258,7 +247,7 @@ export async function generateImage(prompt, imageStyle, imageModel) {
 
     log.fail(new ApiError("No image URL returned from provider", 502), {
       status: 502,
-      message: summarizeAssistantMessage(message),
+      response: summarizeImageResponse(payload),
       retriedEmptyResponse,
     });
     throw new ApiError("No image URL returned from provider", 502);

@@ -47,13 +47,13 @@ export const IMAGE_MODEL_COST_USD = {
     usd: 0.068,
     note: "OpenRouter: ~$0.068/image (Nano Banana)",
   },
-  "openai/gpt-5.4-image-2": {
+  "openai/gpt-image-2.5-flare": {
     kind: "per_tokens",
     inputUsdPerM: 8,
     imageOutputUsdPerM: 30,
     estimatedInputTokens: 1500,
     estimatedImageOutputTokens: 1056,
-    note: "1K medium (~1056 @ $30/M image out) + prompt/ref @ $8/M in",
+    note: "GPT Image 2.5 Flare: ~1K output + prompt/ref @ $8/M in, $30/M image out",
   },
   "sourceful/riverflow-v2.5-fast": {
     kind: "per_image",
@@ -64,6 +64,11 @@ export const IMAGE_MODEL_COST_USD = {
     kind: "per_image",
     usd: 0.06,
     note: "OpenRouter: from $0.06/image",
+  },
+  "meta/muse-image": {
+    kind: "per_image",
+    usd: 0.01,
+    note: "OpenRouter: $0.01/image",
   },
 };
 

@@ -21,8 +21,8 @@ export const IMAGE_MODELS = {
     label: "Nano Banana",
     logoUrl: "/model-logos/google.png",
   },
-  "openai/gpt-5.4-image-2": {
-    label: "ChatGPT Image",
+  "openai/gpt-image-2.5-flare": {
+    label: "GPT Image 2.5 Flare",
     logoUrl: "/model-logos/openai.png",
   },
   "sourceful/riverflow-v2.5-fast": {
@@ -32,6 +32,10 @@ export const IMAGE_MODELS = {
   "krea/krea-2-large": {
     label: "Krea 2 Large",
     logoUrl: "/model-logos/krea.png",
+  },
+  "meta/muse-image": {
+    label: "Muse Image",
+    logoUrl: "/model-logos/meta.png",
   },
 };
 

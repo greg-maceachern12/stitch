@@ -1,4 +1,5 @@
 import { getImageStyle } from "@/lib/imageStyles";
+import { IMAGE_PROMPT_SAFETY_INSTRUCTIONS } from "@/lib/imagePromptSafety";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload } from "./logger";
 import { getOpenRouterTextModel, requireOpenRouterClient } from "./openrouter";
@@ -19,6 +20,9 @@ function buildSystemPrompt(promptStyleGuide) {
 
 Focus on atmospheric elements, surroundings, and objects. Do not focus on character faces.
 Every prompt must describe the scene in this visual style: ${promptStyleGuide}
+
+${IMAGE_PROMPT_SAFETY_INSTRUCTIONS}
+
 If you do not know the book or chapter well enough to illustrate it, reply with only the word False.
 Otherwise reply with only the image prompt, no other commentary.`;
 }

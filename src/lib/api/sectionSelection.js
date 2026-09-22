@@ -1,4 +1,5 @@
 import { getImageStyle } from "@/lib/imageStyles";
+import { IMAGE_PROMPT_SAFETY_INSTRUCTIONS } from "@/lib/imagePromptSafety";
 import {
   buildFallbackSectionSelections,
   normalizeSectionSelections,
@@ -24,7 +25,10 @@ Choose exactly the requested number of passages (targetCount). Spread selections
 Favor visually specific scenes with concrete settings, objects, movement, atmosphere, or dramatic action.
 Avoid passages that are mostly exposition, dialogue without visual context, copyright text, or chapter-title material.
 Every prompt must describe the scene in this visual style: ${promptStyleGuide}
-Prompts should focus on atmospheric elements, surroundings, objects, and composition. Do not focus on character faces.`;
+Prompts should focus on atmospheric elements, surroundings, objects, and composition. Do not focus on character faces.
+
+${IMAGE_PROMPT_SAFETY_INSTRUCTIONS}
+The safety rules apply to the prompt field. Alt text and captions stay neutral and do not repeat disallowed wording.`;
 }
 
 function extractJsonArray(content) {

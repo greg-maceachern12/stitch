@@ -1,4 +1,5 @@
 import { getImageStyle } from "@/lib/imageStyles";
+import { IMAGE_PROMPT_SAFETY_INSTRUCTIONS } from "@/lib/imagePromptSafety";
 import {
   MAX_ATLAS_CHARACTERS,
   MAX_ATLAS_LOCATIONS,
@@ -39,7 +40,10 @@ RECAP
 CHARACTERS (up to ${maxCharacters})
 - Choose the figures a reader most needs to recognize at the story's start; order by importance, protagonist first.
 - description: 2-3 sentences, reader-facing copy shown in the book under their portrait. Cover who they are at the story's start: role, key relationships, temperament, and anything else a reader needs to recognize them early. Spoiler-free.
-- visualBrief: this string is fed directly to an image generator to create a portrait, then a separate style + composition layer is appended. So write ONLY physical appearance as comma-separated descriptors: approximate age, gender presentation, skin tone, hair (color/length/style), eye color, build, distinctive features (scars, glasses, markings), typical attire, and a default expression. Stay faithful to canon when appearance is established; otherwise give a plausible, neutral description. Do NOT include style words, framing, "portrait", lighting, or background — those are added later. No plot spoilers in appearance.
+- visualBrief: this string is fed directly to an image generator to create a portrait, then a separate style + composition layer is appended. So write ONLY physical appearance as comma-separated descriptors: adult age range, gender presentation, skin tone, hair (color/length/style), eye color, build, distinctive features (healed scars, glasses, markings), typical modest attire, and a default expression. Stay faithful to canon when appearance is established; otherwise give a plausible, neutral description. If the character is a child in the story, still describe a young adult so the portrait can be generated. Do NOT include style words, framing, "portrait", lighting, or background — those are added later. No plot spoilers in appearance.
+
+${IMAGE_PROMPT_SAFETY_INSTRUCTIONS}
+Those safety rules apply to visualBrief. Description and recap copy are reader-facing and are not sent to the image generator.
 
 LOCATIONS (up to ${maxLocations})
 - Key places a reader should recognize at the start. Order by importance.

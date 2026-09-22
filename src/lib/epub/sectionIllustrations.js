@@ -171,7 +171,7 @@ export function buildFallbackSectionSelections({
       prompt: [
         `Illustrate this moment from ${bookTitle || "the book"}, chapter "${chapterTitle || "Untitled"}".`,
         candidate.excerpt,
-        `Create a scene-specific ${imageStyle || "illustration"} image with atmospheric surroundings, objects, lighting, and composition. Avoid close-up character faces.`,
+        `Scene-specific ${imageStyle || "illustration"} with atmospheric surroundings, objects, lighting, and composition. Fully clothed adults only if people appear. Avoid close-up faces.`,
       ].join(" "),
       altText: `Illustration for section ${index + 1} of ${chapterTitle || "this chapter"}`,
       caption: "Section illustration",

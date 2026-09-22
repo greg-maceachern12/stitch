@@ -3,11 +3,11 @@ import { OpenRouter } from "@openrouter/sdk";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
 
-/** Gemini chat model for prompt generation (lighter / cheaper). */
-export const PROMPT_GENERATION_MODEL = "google/gemini-3.5-flash-lite";
+/** OpenRouter chat model for prompt generation. */
+export const PROMPT_GENERATION_MODEL = "openai/gpt-6-luna";
 
-/** Gemini chat model for Story Atlas and section art selection. */
-export const ATLAS_SECTION_TEXT_MODEL = "google/gemini-3.6-flash";
+/** OpenRouter chat model for Story Atlas and section art selection. */
+export const ATLAS_SECTION_TEXT_MODEL = "openai/gpt-6-sol";
 
 export { DEFAULT_IMAGE_MODEL };
 
@@ -90,12 +90,12 @@ export function getOpenRouterTextModel() {
   return process.env.OPENROUTER_MODEL || PROMPT_GENERATION_MODEL;
 }
 
-/** Story Atlas plan generation — always Gemini 3.6 Flash (not OPENROUTER_MODEL). */
+/** Story Atlas plan generation — always GPT-6 Sol (not OPENROUTER_MODEL). */
 export function getStoryAtlasTextModel() {
   return ATLAS_SECTION_TEXT_MODEL;
 }
 
-/** Section art selection — always Gemini 3.6 Flash (1M context, not OPENROUTER_MODEL). */
+/** Section art selection — always GPT-6 Sol (not OPENROUTER_MODEL). */
 export function getSectionSelectionModel() {
   return ATLAS_SECTION_TEXT_MODEL;
 }

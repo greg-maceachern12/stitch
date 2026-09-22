@@ -1,4 +1,5 @@
 import { getImageStyle } from "@/lib/imageStyles";
+import { softenImagePrompt } from "@/lib/imagePromptSafety";
 import { resolveStyleReferenceForApi } from "@/lib/server/styleReference";
 import { ApiError } from "./errors";
 import { logApiCall, summarizePayload, truncate } from "./logger";
@@ -144,7 +145,8 @@ export async function generateImage(prompt, imageStyle, imageModel) {
 
   const style = getImageStyle(imageStyle);
   const model = getOpenRouterImageModel(imageModel);
-  const fullPrompt = `${prompt.trim()}${style.promptSuffix}`;
+  const safePrompt = softenImagePrompt(prompt);
+  const fullPrompt = `${safePrompt}${style.promptSuffix}`;
   const wantsReferenceImage = Boolean(
     style.referenceImageUrl && style.referenceInstruction
   );
@@ -169,7 +171,7 @@ export async function generateImage(prompt, imageStyle, imageModel) {
     imageStyle: style.id,
     imageModel: model,
     request: summarizePayload({
-      prompt,
+      prompt: safePrompt,
       imageStyle: style.id,
       imageModel: model,
       referenceImage: hasReferenceImage,

@@ -3,11 +3,14 @@ import { OpenRouter } from "@openrouter/sdk";
 import { DEFAULT_IMAGE_MODEL, getImageModel } from "@/lib/imageModels";
 import { ApiError } from "./errors";
 
-/** OpenRouter chat model for prompt generation. */
-export const PROMPT_GENERATION_MODEL = "openai/gpt-6-luna";
+/**
+ * OpenRouter latest-resolution aliases — always route to the newest model in
+ * each family (see openrouter.ai/docs/guides/routing/routers/latest-resolution).
+ */
+export const PROMPT_GENERATION_MODEL = "~openai/gpt-luna-latest";
 
-/** OpenRouter chat model for Story Atlas and section art selection. */
-export const ATLAS_SECTION_TEXT_MODEL = "openai/gpt-6-sol";
+/** Story Atlas plan + section art selection (stronger reasoning tier). */
+export const ATLAS_SECTION_TEXT_MODEL = "~openai/gpt-sol-latest";
 
 export { DEFAULT_IMAGE_MODEL };
 
@@ -90,14 +93,14 @@ export function getOpenRouterTextModel() {
   return process.env.OPENROUTER_MODEL || PROMPT_GENERATION_MODEL;
 }
 
-/** Story Atlas plan generation — always GPT-6 Sol (not OPENROUTER_MODEL). */
+/** Story Atlas plan generation — GPT Sol latest (not OPENROUTER_MODEL). */
 export function getStoryAtlasTextModel() {
-  return ATLAS_SECTION_TEXT_MODEL;
+  return process.env.OPENROUTER_ATLAS_MODEL || ATLAS_SECTION_TEXT_MODEL;
 }
 
-/** Section art selection — always GPT-6 Sol (not OPENROUTER_MODEL). */
+/** Section art selection — GPT Sol latest (not OPENROUTER_MODEL). */
 export function getSectionSelectionModel() {
-  return ATLAS_SECTION_TEXT_MODEL;
+  return process.env.OPENROUTER_ATLAS_MODEL || ATLAS_SECTION_TEXT_MODEL;
 }
 
 export function getOpenRouterImageModel(requestedModel) {

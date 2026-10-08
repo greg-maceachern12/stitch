@@ -45,7 +45,7 @@ Copy `.env.example` to `.env.local` and add at least `OPENROUTER_API_KEY` for re
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
-OPENROUTER_MODEL=openai/gpt-6-luna
+OPENROUTER_MODEL=~openai/gpt-luna-latest
 
 API_USE_MOCKS=false
 ```
